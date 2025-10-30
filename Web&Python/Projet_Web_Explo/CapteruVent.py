@@ -57,7 +57,7 @@ except KeyboardInterrupt:
 finally:
    spi.close()
    GPIO.cleanup()
-"""
+---
 
 import RPi.GPIO as GPIO
 import time
@@ -82,5 +82,18 @@ try:
        distance = 2 * math.pi * RADIUS * rotations
        wind_speed = distance / duration
        print(f"Vitesse du vent : {wind_speed:.2f} m/s  ({wind_speed*3.6:.2f} km/h)")
+except KeyboardInterrupt:
+   GPIO.cleanup()
+"""
+
+   import RPi.GPIO as GPIO
+import time
+PIN = 22
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+try:
+   while True:
+       print(GPIO.input(PIN))
+       time.sleep(0.01)
 except KeyboardInterrupt:
    GPIO.cleanup()
