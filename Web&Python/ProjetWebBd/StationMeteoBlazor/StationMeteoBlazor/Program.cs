@@ -1,4 +1,7 @@
+using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
 using StationMeteoBlazor.Components;
+using StationMeteoBlazor.Data;
 
 namespace StationMeteoBlazor
 {
@@ -7,6 +10,11 @@ namespace StationMeteoBlazor
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+
+            var conStrBuilder = new SqlConnectionStringBuilder(builder.Configuration.GetConnectionString("test"));
+            conStrBuilder.Password = builder.Configuration["mdpMeteo"];
+
+            builder.Services.AddPooledDbContextFactory<Prog3a25MaStationContext>(x => x.UseSqlServer(conStrBuilder.ConnectionString));
 
             // Add services to the container.
             builder.Services.AddRazorComponents()

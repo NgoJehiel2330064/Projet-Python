@@ -1,4 +1,4 @@
-USE Prog3a25MaStationProd;
+USE Prog3a25MaStation;
 GO
 
 CREATE OR ALTER TRIGGER Ticket_Resolution 
