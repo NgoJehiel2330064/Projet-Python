@@ -1,4 +1,4 @@
-USE Prog3a25MaStation;
+USE Prog3a25MaStationProd;
 GO
 
 /* Dernières mesures de capteur */
@@ -9,7 +9,7 @@ GO
 
 /* Tickets avec le nom de l’utilisateur */
 CREATE OR ALTER VIEW v_TicketsAvecUser AS
-SELECT t.IdTicket, u.Nom, u.Prenom, t.Probleme, t.Resolue, t.DateCreation
+SELECT t.IdTicket,t.IdUtilisateur, u.Nom, u.Prenom, t.Probleme, t.Resolue, t.DateCreation
 FROM Ticket t
 JOIN Utilisateur u ON u.IdUtilisateur = t.IdUtilisateur;
 GO

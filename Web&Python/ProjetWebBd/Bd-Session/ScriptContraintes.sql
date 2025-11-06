@@ -1,4 +1,4 @@
-USE Prog3a25MaStationProd;
+USE Prog3a25MaStation;
 GO
 
  
@@ -52,6 +52,23 @@ ALTER TABLE Utilisateur	  ADD CONSTRAINT DF_User_Sel	   DEFAULT  NEWID() FOR Sel
 ALTER TABLE Connexion     ADD CONSTRAINT DF_Connexion_Date DEFAULT (SYSDATETIME()) FOR DateConnexion;
 
 ALTER TABLE DonneeCapteur ADD CONSTRAINT DF_Donnee_Date    DEFAULT (SYSDATETIME()) FOR DateMesure;
+-- Valeur par défaut pour la luminosité
+ALTER TABLE DonneeCapteur ADD CONSTRAINT DF_Lumiere_Default DEFAULT 0.0 FOR Lumiere;
+GO
+
+-- Valeur par défaut pour la pluie
+ALTER TABLE DonneeCapteur ADD CONSTRAINT DF_Pluie_Default DEFAULT 0.0 FOR Pluie;
+GO
+
+-- Valeur par défaut pour la direction du vent
+ALTER TABLE DonneeCapteur ADD CONSTRAINT DF_VentDirection_Default DEFAULT 0.0 FOR VentDirection;
+GO
+
+-- Valeur par défaut pour la vitesse du vent
+ALTER TABLE DonneeCapteur ADD CONSTRAINT DF_VentVitesse_Default DEFAULT 0.0 FOR VentVitesse;
+GO
+
+
 
 ALTER TABLE Ticket        ADD CONSTRAINT DF_Ticket_Resolue DEFAULT (0)             FOR Resolue;
 ALTER TABLE Ticket        ADD CONSTRAINT DF_Ticket_DateCre DEFAULT (SYSDATETIME()) FOR DateCreation;
@@ -78,3 +95,8 @@ ALTER TABLE Alerte ADD CONSTRAINT CK_Alerte_Capteur CHECK (
   Capteur IN ('temperature','humidite','pression','lumiere','pluie','vent_direction','vent_vitesse')
 );
 
+
+
+
+
+SELECT * from Utilisateur ;
