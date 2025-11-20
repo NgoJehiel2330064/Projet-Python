@@ -1,14 +1,12 @@
-<<<<<<< HEAD
+
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using StationMeteoBlazor.Components;
 using StationMeteoBlazor.Authentification;
 using Microsoft.AspNetCore.Components.Authorization;
-=======
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using StationMeteoBlazor.Components;
 using StationMeteoBlazor.Data;
->>>>>>> e91eddc (changement)
+
 
 namespace StationMeteoBlazor
 {
