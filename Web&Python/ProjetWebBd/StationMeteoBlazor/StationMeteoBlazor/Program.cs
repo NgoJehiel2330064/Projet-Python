@@ -1,7 +1,14 @@
+<<<<<<< HEAD
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using StationMeteoBlazor.Components;
 using StationMeteoBlazor.Authentification;
 using Microsoft.AspNetCore.Components.Authorization;
+=======
+using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
+using StationMeteoBlazor.Components;
+using StationMeteoBlazor.Data;
+>>>>>>> e91eddc (changement)
 
 namespace StationMeteoBlazor
 {
@@ -10,6 +17,11 @@ namespace StationMeteoBlazor
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+            var conStrBuilder = new SqlConnectionStringBuilder(builder.Configuration.GetConnectionString("MaConnexion"));
+             conStrBuilder.Password = builder.Configuration["MaConnexion"];
+
+            builder.Services.AddDbContextFactory<Prog3a25MaStationContext>(x => x.UseSqlServer(conStrBuilder.ConnectionString));
+            builder.Services.AddScoped<SupportService>();
 
             // Add services to the container.
             builder.Services.AddRazorComponents()

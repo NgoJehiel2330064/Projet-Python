@@ -1,0 +1,71 @@
+﻿@using StationMeteoBlazor.Data
+@using StationMeteoBlazor.Models
+@rendermode InteractiveServer
+@inject LoginService Service
+@inject IJSRuntime JS
+@page "/login"
+
+<div class="container mt-5" style="max-width: 420px;">
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-primary text-white fw-semibold text-center">
+            Connexion à la Station Météo
+        </div>
+
+        <div class="card-body">
+            <div class="mb-3">
+                <label for="email" class="form-label fw-semibold">Adresse courriel</label>
+                <input type="email" id="email" class="form-control" placeholder="exemple@cegepjonquiere.ca" @bind="email">
+            </div>
+
+            <div class="mb-3">
+                <label for="motdepasse" class="form-label fw-semibold">Mot de passe</label>
+                <input type="password" id="motdepasse" class="form-control" placeholder="Votre mot de passe" @bind="motDePasse">
+            </div>
+
+            <div class="d-grid">
+                <button class="btn btn-primary" @onclick="ConnexionAsync">
+                    <i class="bi bi-box-arrow-in-right"></i> Se connecter
+                </button>
+            </div>
+
+            <div class="text-center mt-3">
+                <small class="text-muted">Pas encore de compte ? <a href="/register">Inscription</a></small>
+            </div>
+            <hr />
+            <p>@message</p>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string email = string.Empty;
+    private string motDePasse = string.Empty;
+    private string message = string.Empty;
+    private int Idutilisateur;
+
+    private async Task ConnexionAsync()
+    {
+        try
+        {
+            Idutilisateur = await Service.SeConnecter(email, motDePasse);
+
+            if (Idutilisateur > 0)
+            {
+                message = $"Connexion réussie : ID {Idutilisateur}";
+                await JS.InvokeVoidAsync("alert", "Connexion réussie !");
+                // Exemple : redirection future
+                // NavigationManager.NavigateTo("/dashboard");
+            }
+            else
+            {
+                message = $"Échec de la connexion. Vérifie tes identifiants.{Idutilisateur}";
+                await JS.InvokeVoidAsync("alert", "Identifiants invalides.");
+            }
+        }
+        catch (Exception ex)
+        {
+            message = $"Erreur : {ex.Message}";
+            await JS.InvokeVoidAsync("alert", "Erreur interne lors de la connexion.");
+        }
+    }
+}

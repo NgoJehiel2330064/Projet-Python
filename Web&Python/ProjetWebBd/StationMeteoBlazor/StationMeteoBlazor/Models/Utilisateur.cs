@@ -39,6 +39,9 @@ public partial class Utilisateur
     public virtual ICollection<Commentaire> Commentaires { get; set; } = new List<Commentaire>();
 
     [InverseProperty("IdUtilisateurNavigation")]
+    public virtual ICollection<Connexion> Connexions { get; set; } = new List<Connexion>();
+
+    [InverseProperty("IdUtilisateurNavigation")]
     public virtual ICollection<DonneeCapteur> DonneeCapteurs { get; set; } = new List<DonneeCapteur>();
 
     [InverseProperty("IdUtilisateurNavigation")]

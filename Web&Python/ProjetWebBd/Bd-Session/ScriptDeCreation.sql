@@ -1,5 +1,5 @@
 USE master;
-IF DB_ID('Prog3a25MaStationProd') IS NOT NULL DROP DATABASE Prog3a25MaStationProd;
+IF DB_ID('Prog3a25MaStation') IS NOT NULL DROP DATABASE Prog3a25MaStation;
 GO
 
 CREATE DATABASE Prog3a25MaStation;	--Cree une base de donnée

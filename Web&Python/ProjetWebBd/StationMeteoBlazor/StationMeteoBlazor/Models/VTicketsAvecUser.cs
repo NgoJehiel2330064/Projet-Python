@@ -11,6 +11,8 @@ public partial class VTicketsAvecUser
 {
     public int IdTicket { get; set; }
 
+    public int IdUtilisateur { get; set; }
+
     [StringLength(100)]
     [Unicode(false)]
     public string Nom { get; set; } = null!;

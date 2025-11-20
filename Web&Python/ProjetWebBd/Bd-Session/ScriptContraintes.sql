@@ -1,4 +1,4 @@
-USE Prog3a25MaStationProd;
+USE Prog3a25MaStation;
 GO
 
  
@@ -72,9 +72,16 @@ CHECK (
  OR (Resolue = 1 AND DateResolution IS NOT NULL)
 );
 
-
-
 ALTER TABLE Alerte ADD CONSTRAINT CK_Alerte_Capteur CHECK (
   Capteur IN ('temperature','humidite','pression','lumiere','pluie','vent_direction','vent_vitesse')
 );
 
+
+
+
+INSERT INTO DonneeCapteur (IdUtilisateur, DateMesure, Temperature, Humidite, Pression, Lumiere, Pluie, VentDirection, VentVitesse)
+VALUES
+(10, '2025-11-14 09:00:00', 22.5, 45.0, 1013.25, 300.0, 0.0, 180.0, 5.2),
+(10, '2025-11-14 09:10:00', 22.7, 44.5, 1013.10, 320.0, 0.0, 185.0, 4.8),
+(10, '2025-11-14 09:20:00', 23.0, 43.8, 1012.95, 340.0, 0.0, 190.0, 4.5),
+(10, '2025-11-14 09:30:00', 23.3, 43.0, 1012.70, 360.0, 0.0, 200.0, 4.2);

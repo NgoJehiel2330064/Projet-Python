@@ -1,0 +1,77 @@
+﻿@using StationMeteoBlazor.Data
+@using StationMeteoBlazor.Models
+@page "/capteurs"
+@inject DonneeCapteurService Service
+
+<PageTitle>Donnees Capteurs</PageTitle>
+
+<h3>Liste des données des capteurs</h3>
+
+@if (capteurs == null)
+{
+    <p>Chargement des données...</p>
+}
+else if (!capteurs.Any())
+{
+    <p>Aucune donnée de capteur trouvée.</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>IdDonneeCapteur</th>
+                <th>IdUtilisateur</th>
+                <th>DateMesure</th>
+                <th>Temperature</th>
+                <th>Humidite</th>
+                <th>Pression</th>
+                <th>Lumiere</th>
+                <th>Pluie</th>
+                <th>VentDirection</th>
+                <th>VentVitesse</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var cpt in capteurs)
+            {
+                <tr>
+                    <td>@cpt.IdDonneeCapteur</td>
+                    <td>@cpt.IdUtilisateur</td>
+                    <td>@cpt.DateMesure</td>
+                    <td>@cpt.Temperature</td>
+                    <td>@cpt.Humidite</td>
+                    <td>@cpt.Pression</td>
+                    <td>@cpt.Lumiere</td>
+                    <td>@cpt.Pluie</td>
+                    <td>@cpt.VentDirection</td>
+                    <td>@cpt.VentVitesse</td>
+                </tr>
+            }
+        </tbody>
+
+    </table>
+}
+
+
+
+@code {
+    // Zone de code C# intégrée dans ta page Blazor.
+
+
+    // Déclaration d'une liste qui contiendra les données des capteurs.
+    private List<DonneeCapteur>? capteurs;
+
+    // Méthode Blazor exécutée automatiquement au chargement de la page.
+    // elle appelle le service pour récupérer les données des capteurs et les met dans la variable capteurs.
+    protected override async Task OnInitializedAsync()
+    {
+        // On utilise le service injecté pour aller chercher les données dans la BD.
+
+        // Appelle la méthode du service pour récupérer toutes les données depuis SQL Server.
+        capteurs = await Service.GetAllAsync();
+    }
+
+}
+
+

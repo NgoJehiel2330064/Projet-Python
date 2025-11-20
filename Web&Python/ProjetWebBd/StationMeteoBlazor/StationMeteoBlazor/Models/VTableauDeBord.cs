@@ -9,24 +9,24 @@ namespace StationMeteoBlazor.Models;
 [Keyless]
 public partial class VTableauDeBord
 {
-    public int IdUtilisateur { get; set; }
+    public int? IdUtilisateur { get; set; }
 
     [StringLength(100)]
     [Unicode(false)]
-    public string Nom { get; set; } = null!;
+    public string? Nom { get; set; }
 
     [StringLength(100)]
     [Unicode(false)]
-    public string Prenom { get; set; } = null!;
+    public string? Prenom { get; set; }
 
-    public int IdTicket { get; set; }
+    public int? IdTicket { get; set; }
 
-    public string Probleme { get; set; } = null!;
+    public string? Probleme { get; set; }
 
-    public bool Resolue { get; set; }
+    public bool? Resolue { get; set; }
 
     [Precision(0)]
-    public DateTime DateTicket { get; set; }
+    public DateTime? DateTicket { get; set; }
 
     public int? NbCommentaires { get; set; }
 

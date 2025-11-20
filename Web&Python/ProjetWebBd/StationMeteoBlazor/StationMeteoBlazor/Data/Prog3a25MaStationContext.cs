@@ -20,6 +20,8 @@ public partial class Prog3a25MaStationContext : DbContext
 
     public virtual DbSet<Commentaire> Commentaires { get; set; }
 
+    public virtual DbSet<Connexion> Connexions { get; set; }
+
     public virtual DbSet<DonneeCapteur> DonneeCapteurs { get; set; }
 
     public virtual DbSet<Produit> Produits { get; set; }
@@ -38,9 +40,7 @@ public partial class Prog3a25MaStationContext : DbContext
 
     public virtual DbSet<VTicketsAvecUser> VTicketsAvecUsers { get; set; }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        => optionsBuilder.UseSqlServer("Name=MaConnexion");
-
+ 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Alerte>(entity =>
@@ -62,11 +62,22 @@ public partial class Prog3a25MaStationContext : DbContext
                 .HasConstraintName("FK_Com_User");
         });
 
+        modelBuilder.Entity<Connexion>(entity =>
+        {
+            entity.Property(e => e.DateConnexion).HasDefaultValueSql("(sysdatetime())");
+
+            entity.HasOne(d => d.IdUtilisateurNavigation).WithMany(p => p.Connexions).HasConstraintName("FK_Connexion_User");
+        });
+
         modelBuilder.Entity<DonneeCapteur>(entity =>
         {
             entity.ToTable("DonneeCapteur", tb => tb.HasTrigger("verifeCapteurDonneeAlerte"));
 
             entity.Property(e => e.DateMesure).HasDefaultValueSql("(sysdatetime())");
+            entity.Property(e => e.Lumiere).HasDefaultValueSql("((0.0))");
+            entity.Property(e => e.Pluie).HasDefaultValueSql("((0.0))");
+            entity.Property(e => e.VentDirection).HasDefaultValueSql("((0.0))");
+            entity.Property(e => e.VentVitesse).HasDefaultValueSql("((0.0))");
 
             entity.HasOne(d => d.IdUtilisateurNavigation).WithMany(p => p.DonneeCapteurs).HasConstraintName("FK_Donnee_User");
         });

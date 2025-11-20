@@ -1,0 +1,107 @@
+﻿@using StationMeteoBlazor.Data
+@using StationMeteoBlazor.Models
+@page "/support"
+@inject SupportService Service
+
+@if(ticketUsers == null)
+{
+    <p>Chargement des données...</p>
+}
+/*else if (!ticketUsers.Any())
+{
+    <p>Aucune donnée de capteur trouvée.</p>
+}*/
+else{
+<div class="container mt-4">
+    <h2 class="text-center mb-4">Support technique</h2>
+    <div class="row">
+        <!-- Formulaire de création -->
+        <div class="col-md-6">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    Soumettre un nouveau problème
+                </div>
+                <div class="card-body">
+
+                    <!-- Formulaire Bootstrap -->
+                    <form>
+                        <div class="mb-3">
+                            <label for="probleme" class="form-label fw-semibold">Décrivez votre problème</label>
+                            <textarea id="probleme"
+                                      class="form-control"
+                                      rows="4"
+                                      placeholder="Exemple : Le capteur d'humidité ne répond plus."></textarea>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="button" class="btn btn-primary">
+                                <i class="bi bi-send"></i> Envoyer
+                            </button>
+                        </div>
+                    </form>
+
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Liste des tickets -->
+        <div class="col-md-6">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-success text-white">
+                    Mes tickets précédents
+                </div>
+                <div class="card-body">
+                    <!-- Ici on mettra la liste des tickets -->
+                    @if (!ticketUsers.Any())
+                    {
+                        <p class="text-muted">Aucun ticket à afficher pour l’instant.</p>
+                    }
+                    else
+                    {
+                        <table class="table table-striped">
+                            <thead></thead>
+                            <tr>
+                                <th>IdTicket</th>
+                                <th>Nom</th>
+                                <th>Prenom</th>
+                                <th>Probleme</th>
+                                <th>Resolue</th>
+                                <th>DateDeCreation</th>
+                            </tr>
+                            <tbody>
+                                @foreach (var t in ticketUsers)
+                                {
+                                    <tr>
+                                        <td>@t.IdTicket</td>
+                                        <td>@t.IdUtilisateur</td>
+                                        <td>@t.Nom</td>
+                                        <td>@t.Prenom</td>
+                                        <td>@t.Probleme</td>
+                                        <td>@t.Resolue</td>
+                                        <td>@t.DateCreation</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+}
+
+
+
+@code {
+
+    private List<VTicketsAvecUser>? ticketUsers;
+    private int id = 10;
+
+    protected override async Task OnInitializedAsync()
+    {
+        ticketUsers = await Service.GetTicketUser(id);
+    }
+
+}
