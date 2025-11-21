@@ -1,0 +1,158 @@
+﻿@page "/ticket/{IdTicket:int}"
+@using StationMeteoBlazor.Models
+@using StationMeteoBlazor.Data
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
+@inject SupportService Service
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthStateProvider
+@rendermode InteractiveServer
+@attribute [StreamRendering]
+
+<PageTitle>Ticket</PageTitle>
+
+@if (tickets == null)
+{
+    <p>Chargement...</p>
+}
+else
+{
+    <div class="container mt-4">
+
+        <button class="btn btn-secondary mb-3" @onclick="Retour">
+            ← Retour
+        </button>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                Ticket #@tickets.IdTicket
+            </div>
+
+            <div class="card-body">
+                <p><strong>Nom :</strong> @tickets.Nom</p>
+                <p><strong>Prénom :</strong> @tickets.Prenom</p>
+                <p><strong>Problème :</strong> @tickets.Probleme</p>
+                <p><strong>Date :</strong> @tickets.DateCreation</p>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-success text-white">Discussion</div>
+            <div class="card-body">
+
+                @if (!commentaires.Any())
+                {
+                    <p class="text-muted">Aucun commentaire.</p>
+                }
+                else
+                {
+                    @foreach (var c in commentaires)
+                    {
+                        <div class="border rounded p-3 mb-3">
+                            <strong>@c.Nom @c.Prenom</strong>
+                            <small class="text-muted float-end">@c.DateCommentaire</small>
+                            <p class="mt-2">@c.Reponse</p>
+                        </div>
+                    }
+                }
+
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header bg-dark text-white">Ajouter un commentaire</div>
+            <div class="card-body">
+                <textarea class="form-control" rows="3" @bind="nouvelleReponse"></textarea>
+
+                <button class="btn btn-primary mt-2" @onclick="EnvoyerCommentaire">
+                    Envoyer
+                </button>
+            </div>
+        </div>
+
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int IdTicket { get; set; }
+
+    VTicketsAvecUser? tickets;
+    List<VCommentaire> commentaires = new();
+
+    string nouvelleReponse = "";
+    private int currentUserId;
+    private bool isAdmin = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // récupérer l'utilisateur connecté
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState?.User;
+        var idClaimValue = user?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (!int.TryParse(idClaimValue, out currentUserId))
+        {
+            Navigation.NavigateTo("/login");
+            return;
+        }
+
+        isAdmin = user?.IsInRole("Admin") == true;
+
+        // charger le ticket par id de route
+        tickets = await Service.GetTicketById(IdTicket);
+        if (tickets == null)
+        {
+            Navigation.NavigateTo("/support");
+            return;
+        }
+
+        // contrôle d'accès : autoriser si admin OU propriétaire du ticket
+        if (!isAdmin && tickets.IdUtilisateur != currentUserId)
+        {
+            Navigation.NavigateTo("/support");
+            return;
+        }
+
+        commentaires = await Service.GetCommentaires(IdTicket) ?? new List<VCommentaire>();
+    }
+
+    private async Task EnvoyerCommentaire()
+    {
+        if (string.IsNullOrWhiteSpace(nouvelleReponse)) return;
+
+        await Service.AjouterCommentaire(IdTicket, currentUserId, nouvelleReponse);
+
+        nouvelleReponse = "";
+
+        commentaires = await Service.GetCommentaires(IdTicket) ?? new List<VCommentaire>();
+    }
+
+    private async Task Retour()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState?.User;
+
+        if (user?.IsInRole("Admin") == true)
+        {
+            // Si l'admin vient d'une page précise (param "from"), respecter l'origine
+            var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+            var qs = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+            if (qs.TryGetValue("from", out var from))
+            {
+                var f = from.ToString();
+                if (f == "admin-dashboard" || f == "support-admin")
+                {
+                    Navigation.NavigateTo($"/{f}");
+                    return;
+                }
+            }
+
+            Navigation.NavigateTo("/admin-dashboard");
+        }
+        else
+        {
+            Navigation.NavigateTo("/support");
+        }
+    }
+}

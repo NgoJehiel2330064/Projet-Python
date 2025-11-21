@@ -1,9 +1,16 @@
-﻿@using StationMeteoBlazor.Data
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@using StationMeteoBlazor.Data
 @using StationMeteoBlazor.Models
 @rendermode InteractiveServer
 @inject LoginService Service
+@using StationMeteoBlazor.Authentification
+@inject AuthenticationStateProvider AuthenticationStateProvider
 @inject IJSRuntime JS
 @page "/login"
+@inject NavigationManager Navigation
+
+<PageTitle>Connexion</PageTitle>
+
 
 <div class="container mt-5" style="max-width: 420px;">
     <div class="card shadow-sm border-0">
@@ -14,12 +21,12 @@
         <div class="card-body">
             <div class="mb-3">
                 <label for="email" class="form-label fw-semibold">Adresse courriel</label>
-                <input type="email" id="email" class="form-control" placeholder="exemple@cegepjonquiere.ca" @bind="email">
+                <input type="email" id="email" class="form-control" placeholder="exemple@cegepjonquiere.ca" @bind="user.Email">
             </div>
 
             <div class="mb-3">
                 <label for="motdepasse" class="form-label fw-semibold">Mot de passe</label>
-                <input type="password" id="motdepasse" class="form-control" placeholder="Votre mot de passe" @bind="motDePasse">
+                <input type="password" id="motdepasse" class="form-control" placeholder="Votre mot de passe" @bind="user.MotDePasseNonHash">
             </div>
 
             <div class="d-grid">
@@ -38,34 +45,73 @@
 </div>
 
 @code {
-    private string email = string.Empty;
-    private string motDePasse = string.Empty;
+    /*
+    Plan (pseudocode détaillé) :
+    1. Appeler le service de connexion pour obtenir l'Id utilisateur.
+    2. Si l'Id > 0, caster AuthenticationStateProvider vers CustomAuthenticationStateProvider en utilisant 'as'.
+       - Vérifier que le cast a réussi (!= null).
+       - Appeler la méthode d'instance UpdateAuthenticationState sur cette instance.
+    3. Naviguer vers la page des capteurs.
+    4. Sinon, afficher un message d'erreur.
+    5. Gérer les exceptions.
+    Remarque : l'erreur CS0120 se produit parce qu'on appelait la méthode d'instance comme si elle était statique.
+    La correction consiste à appeler la méthode sur l'instance (ex: connexAuth.UpdateAuthenticationState(...)).
+    */
+
     private string message = string.Empty;
     private int Idutilisateur;
+    private string role = string.Empty;
+
+    private Utilisateur user = new Utilisateur();
 
     private async Task ConnexionAsync()
     {
+        await Task.Delay(500);
+
         try
         {
-            Idutilisateur = await Service.SeConnecter(email, motDePasse);
-
+            var result = await Service.SeConnecter(user.Email, user.MotDePasseNonHash);
+            Idutilisateur = result.Id;
+            role = result.Role;
             if (Idutilisateur > 0)
             {
-                message = $"Connexion réussie : ID {Idutilisateur}";
-                await JS.InvokeVoidAsync("alert", "Connexion réussie !");
-                // Exemple : redirection future
-                // NavigationManager.NavigateTo("/dashboard");
+                // message = $"Connexion réussie : ID {Idutilisateur}";
+
+                // Caster correctement en utilisant 'as' et appeler la méthode d'instance
+                var connexAuth = AuthenticationStateProvider as CustomAuthenticationStateProvider;
+                if (connexAuth != null)
+                {
+                    await connexAuth.UpdateAuthenticationState(new UserSession
+                    {
+                        UserName = user.Email,
+                        Role = role,
+                        UserId = Idutilisateur
+                    });
+                }
+                else
+                {
+                    // Optionnel : log ou message si le cast échoue
+                    message += " (Impossible de mettre à jour l'état d'authentification)";
+                }
+                if (role == "User")
+                {
+                    Navigation.NavigateTo("/capteurs");
+                    return;
+                }
+                else
+                {
+                    Navigation.NavigateTo("/admin-dashboard");
+
+                }
             }
             else
             {
-                message = $"Échec de la connexion. Vérifie tes identifiants.{Idutilisateur}";
-                await JS.InvokeVoidAsync("alert", "Identifiants invalides.");
+                message = $"Échec de connexion. Veuillez vérifier vos identifiants ou votre mot de passe.";
             }
         }
         catch (Exception ex)
         {
             message = $"Erreur : {ex.Message}";
-            await JS.InvokeVoidAsync("alert", "Erreur interne lors de la connexion.");
         }
     }
 }

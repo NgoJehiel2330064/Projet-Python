@@ -1,0 +1,235 @@
+﻿@page "/support-admin"
+@using StationMeteoBlazor.Models
+@using StationMeteoBlazor.Data
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@attribute [Authorize]
+@inject SupportService Service
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+<PageTitle>Gestion des tickets</PageTitle>
+
+<AuthorizeView>
+    <Authorized Context="adminContext">
+        @if (isLoading)
+        {
+            <p>Chargement...</p>
+        }
+        else if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger">@errorMessage</div>
+        }
+        else
+        {
+            <div class="container mt-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h2 class="mb-0">Administration — Tickets</h2>
+                    <small class="text-muted">Connecté : @currentUserName@if(isAdmin) {
+                    <span class="ms-2 badge bg-info text-dark">Admin</span>
+                }
+</small>
+            </div>
+
+            <!-- FILTRE -->
+            <div class="mb-3">
+                <label class="form-label fw-bold">Filtrer :</label>
+                <select class="form-select w-auto d-inline-block" @bind="CurrentFilter">
+                    <option value="all">Tous</option>
+                    <option value="open">Non résolus</option>
+                    <option value="closed">Résolus</option>
+                </select>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-body">
+
+                    @if (!tickets.Any())
+                    {
+                        <p class="text-muted">Aucun ticket trouvé.</p>
+                    }
+                    else
+                    {
+                        <table class="table table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nom</th>
+                                    <th>Prénom</th>
+                                    <th>Problème</th>
+                                    <th>État</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                @foreach (var t in tickets)
+                                {
+                                    <tr>
+                                        <td>@t.IdTicket</td>
+                                        <td>@t.Nom</td>
+                                        <td>@t.Prenom</td>
+                                        <td>@t.Probleme</td>
+                                        <td>
+                                            @if (t.Resolue)
+                                            {
+                                                <span class="badge bg-success">Résolu</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-warning text-dark">En attente</span>
+                                            }
+                                        </td>
+                                        <td>@t.DateCreation.ToString("g")</td>
+
+                                        <td>
+                                            <!-- Voir le ticket (passage par route avec paramètre + origine) -->
+                                            <button class="btn btn-sm btn-outline-primary me-2"
+                                                    @onclick="() => VoirTicket(t.IdTicket)">
+                                                Voir
+                                            </button>
+
+                                            <!-- Marquer résolu : visible uniquement aux Admin -->
+                                            <AuthorizeView Roles="Admin">
+                                                <Authorized Context="adminTicketContext">
+                                                    @if (!t.Resolue)
+                                                    {
+                                                        <button class="btn btn-sm btn-success"
+                                                                disabled="@resolvingIds.Contains(t.IdTicket)"
+                                                                @onclick="() => Resoudre(t.IdTicket)">
+                                                            @if (resolvingIds.Contains(t.IdTicket))
+                                                            {
+                                                                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                                                <span class="ms-1">Traitement...</span>
+                                                            }
+                                                            else
+                                                            {
+                                                                <span>Résoudre</span>
+                                                            }
+                                                        </button>
+                                                    }
+                                                </Authorized>
+                                                <NotAuthorized>
+                                                    @* Rien à afficher pour les non-admins *@
+                                                </NotAuthorized>
+                                            </AuthorizeView>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+
+                        </table>
+                    }
+
+                </div>
+            </div>
+
+        </div>
+                }
+    </Authorized>
+
+    <NotAuthorized Context="notAuthContext">
+        <div class="container mt-4">
+            <div class="alert alert-warning">
+                Vous devez être connecté pour accéder à cette page.
+                <a href="/login" class="ms-2">Se connecter</a>
+            </div>
+        </div>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    [CascadingParameter] private Task<AuthenticationState> AuthenticationStateTask { get; set; } = default!;
+
+    private List<VTicketsAvecUser> tickets = new();
+    private List<VTicketsAvecUser> ticketsBrut = new();
+    private bool isLoading = true;
+    private string? errorMessage;
+    private readonly HashSet<int> resolvingIds = new();
+
+    private string currentFilter = "all";
+    private string CurrentFilter
+    {
+        get => currentFilter;
+        set
+        {
+            if (currentFilter == value) return;
+            currentFilter = value;
+            ApplyFilter();
+        }
+    }
+
+    private string currentUserName = string.Empty;
+    private bool isAdmin = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        isLoading = true;
+        errorMessage = null;
+        try
+        {
+            // Récupérer l'état d'authentification pour afficher le nom et rôle
+            var authState = await AuthenticationStateTask;
+            var user = authState.User;
+            currentUserName = user.Identity?.Name ?? "Invité";
+            isAdmin = user.IsInRole("Admin");
+
+            ticketsBrut = (await Service.GetAllTickets()) ?? new List<VTicketsAvecUser>();
+            ApplyFilter();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Impossible de charger les tickets : " + ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void ApplyFilter()
+    {
+        tickets = currentFilter switch
+        {
+            "open" => ticketsBrut.Where(t => !t.Resolue).ToList(),
+            "closed" => ticketsBrut.Where(t => t.Resolue).ToList(),
+            _ => new List<VTicketsAvecUser>(ticketsBrut)
+        };
+        StateHasChanged();
+    }
+
+    private void VoirTicket(int idTicket)
+    {
+        // Navigation vers la page ticket en précisant l'origine
+        Navigation.NavigateTo($"/ticket/{idTicket}?from=support-admin");
+    }
+
+    private async Task Resoudre(int idTicket)
+    {
+        // confirmation utilisateur
+        bool ok = await JS.InvokeAsync<bool>("confirm", $"Confirmer la résolution du ticket #{idTicket} ?");
+        if (!ok) return;
+
+        resolvingIds.Add(idTicket);
+        try
+        {
+            await Service.MarquerCommeResolue(idTicket);
+
+            // Mise à jour locale pour éviter un reload complet
+            var item = ticketsBrut.FirstOrDefault(t => t.IdTicket == idTicket);
+            if (item != null) item.Resolue = true;
+
+            ApplyFilter();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Erreur lors de la mise à jour du ticket : " + ex.Message;
+        }
+        finally
+        {
+            resolvingIds.Remove(idTicket);
+            StateHasChanged();
+        }
+    }
+}

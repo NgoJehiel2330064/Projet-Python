@@ -1,0 +1,171 @@
+﻿@page "/admin-dashboard"
+@using StationMeteoBlazor.Data
+@using StationMeteoBlazor.Models
+@using Microsoft.AspNetCore.Components.Authorization
+@inject SupportService Service
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthStateProvider
+
+<PageTitle>Dashboard Admin</PageTitle>
+
+@if (isLoading)
+{
+    <div class="text-center mt-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-3">Chargement...</p>
+    </div>
+}
+else if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger mt-4">@errorMessage</div>
+}
+else
+{
+    <div class="container mt-4">
+
+        <h2 class="mb-4 fw-bold">Dashboard — Administration</h2>
+
+        <!-- Cartes statistiques -->
+        <div class="row g-4 mb-4">
+
+            <div class="col-md-3">
+                <div class="card shadow-sm border-0 text-center p-3">
+                    <h6 class="text-muted">Total des tickets</h6>
+                    <h2 class="fw-bold">@GetStat("total")</h2>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card shadow-sm border-0 text-center p-3">
+                    <h6 class="text-muted">Résolus</h6>
+                    <h2 class="fw-bold text-success">@GetStat("resolus")</h2>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card shadow-sm border-0 text-center p-3">
+                    <h6 class="text-muted">Non résolus</h6>
+                    <h2 class="fw-bold text-danger">@GetStat("nonResolus")</h2>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card shadow-sm border-0 text-center p-3">
+                    <h6 class="text-muted">Créés aujourd'hui</h6>
+                    <h2 class="fw-bold">@GetStat("aujourdHui")</h2>
+                </div>
+            </div>
+
+        </div>
+
+
+        <!-- Tableau des derniers tickets -->
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-dark text-white fw-bold">
+                Derniers tickets
+            </div>
+
+            <div class="card-body">
+                @if (tickets == null || !tickets.Any())
+                {
+                    <p class="text-muted">Aucun ticket pour le moment.</p>
+                }
+                else
+                {
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Utilisateur</th>
+                                <th>Problème</th>
+                                <th>État</th>
+                                <th>Date</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var t in tickets.Take(8))
+                            {
+                                <tr>
+                                    <td>@t.IdTicket</td>
+                                    <td>@t.Nom @t.Prenom</td>
+                                    <td class="text-truncate" style="max-width: 250px;">@t.Probleme</td>
+                                    <td>
+                                        @if (t.Resolue)
+                                        {
+                                            <span class="badge bg-success">Résolu</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning text-dark">En attente</span>
+                                        }
+                                    </td>
+                                    <td>@t.DateCreation.ToString("yyyy-MM-dd")</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary"
+                                                @onclick="() => VoirTicket(t.IdTicket)">
+                                            Ouvrir
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </div>
+        </div>
+
+        <div class="text-end mt-3">
+            <button class="btn btn-primary" @onclick="GotoAdmin">
+                Gestion complète des tickets →
+            </button>
+        </div>
+
+    </div>
+}
+
+@code {
+    Dictionary<string, int>? stats;
+    List<VTicketsAvecUser>? tickets;
+    private bool isLoading = true;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = authState?.User;
+            if (user == null || !(user.Identity?.IsAuthenticated ?? false))
+            {
+                await Task.Yield();
+                Navigation.NavigateTo("/login", true);
+                return;
+            }
+
+            stats = await Service.GetStats();
+            tickets = await Service.GetAllTickets();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Impossible de charger le tableau de bord. Réessayez plus tard.";
+            Console.Error.WriteLine(ex);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private int GetStat(string key)
+    {
+        if (stats != null && stats.TryGetValue(key, out var v)) return v;
+        return 0;
+    }
+
+    private void VoirTicket(int id) => Navigation.NavigateTo($"/ticket/{id}?from=admin-dashboard");
+    private void GotoAdmin() => Navigation.NavigateTo("/support-admin");
+}

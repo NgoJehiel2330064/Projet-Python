@@ -1,77 +1,335 @@
-﻿@using StationMeteoBlazor.Data
+﻿@page "/capteurs"
+@using StationMeteoBlazor.Data
 @using StationMeteoBlazor.Models
-@page "/capteurs"
 @inject DonneeCapteurService Service
+@inject IJSRuntime JS
+@rendermode InteractiveServer
+@attribute [StreamRendering]
+@inject NavigationManager Navigation
 
-<PageTitle>Donnees Capteurs</PageTitle>
+<PageTitle>Dashboard Station Météo</PageTitle>
 
-<h3>Liste des données des capteurs</h3>
-
-@if (capteurs == null)
+@* Affichage d'un loader central tant que les données sont en cours de chargement *@
+@if (isLoading)
 {
-    <p>Chargement des données...</p>
-}
-else if (!capteurs.Any())
-{
-    <p>Aucune donnée de capteur trouvée.</p>
+    <div class="d-flex justify-content-center align-items-center" style="height:240px;">
+        <div class="loader" role="status" aria-label="Chargement des données"></div>
+    </div>
 }
 else
 {
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>IdDonneeCapteur</th>
-                <th>IdUtilisateur</th>
-                <th>DateMesure</th>
-                <th>Temperature</th>
-                <th>Humidite</th>
-                <th>Pression</th>
-                <th>Lumiere</th>
-                <th>Pluie</th>
-                <th>VentDirection</th>
-                <th>VentVitesse</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var cpt in capteurs)
-            {
-                <tr>
-                    <td>@cpt.IdDonneeCapteur</td>
-                    <td>@cpt.IdUtilisateur</td>
-                    <td>@cpt.DateMesure</td>
-                    <td>@cpt.Temperature</td>
-                    <td>@cpt.Humidite</td>
-                    <td>@cpt.Pression</td>
-                    <td>@cpt.Lumiere</td>
-                    <td>@cpt.Pluie</td>
-                    <td>@cpt.VentDirection</td>
-                    <td>@cpt.VentVitesse</td>
-                </tr>
-            }
-        </tbody>
+    <div class="container mt-3 fade-in">
 
-    </table>
+        @* Entête : titre + actions principales alignées à droite *@
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="mb-0">Station météo — Dashboard</h3>
+            <div class="d-flex align-items-center">
+                <small class="text-muted me-3">Dernière mise à jour : @LastUpdateString</small>
+                <button class="btn btn-dark me-2" @onclick="ToggleDarkMode">🌙 Mode sombre</button>
+                <button class="btn btn-secondary me-2" @onclick="ActualiserDonnees">🔄 Actualiser</button>
+                <button class="btn btn-primary" @onclick="ExporterPDF">📄 Exporter</button>
+            </div>
+        </div>
+
+        @* Sélecteur de période *@
+        <div class="mb-4">
+            <label class="form-label me-2">Période :</label>
+            <select class="form-select w-auto d-inline-block" @onchange="ChangerPlageDonnees">
+                <option value="1">Dernière heure</option>
+                <option value="168">7 jours</option>
+                <option value="0">Toutes les données</option>
+            </select>
+        </div>
+
+        @* Cartes métriques : température / humidité / pression / vent *@
+        <div class="row g-3 mb-4">
+            <div class="col-sm-6 col-md-3">
+                <div class="card shadow-sm text-center p-3 h-100">
+                    <div class="card-body">
+                        <h6 class="card-title text-muted">Température</h6>
+                        <h2 class="display-6">@dernierTemp °C</h2>
+                        <small class="text-muted">Dernier relevé</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-sm-6 col-md-3">
+                <div class="card shadow-sm text-center p-3 h-100">
+                    <div class="card-body">
+                        <h6 class="card-title text-muted">Humidité</h6>
+                        <h2 class="display-6">@dernierHum %</h2>
+                        <small class="text-muted">Dernier relevé</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-sm-6 col-md-3">
+                <div class="card shadow-sm text-center p-3 h-100">
+                    <div class="card-body">
+                        <h6 class="card-title text-muted">Pression</h6>
+                        <h2 class="display-6">@dernierPress hPa</h2>
+                        <small class="text-muted">Dernier relevé</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-sm-6 col-md-3">
+                <div class="card shadow-sm text-center p-3 h-100">
+                    <div class="card-body">
+                        <h6 class="card-title text-muted">Vent</h6>
+                        <h2 class="display-6">@dernierVent m/s</h2>
+                        <small class="text-muted">Dernier relevé</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* Graphiques : un grand combiné, puis grille de graphiques secondaires *@
+        <div class="card shadow-sm p-4 mb-4">
+            <h5 class="mb-3">Température — Humidité</h5>
+            <div class="ratio ratio-16x6">
+                <canvas id="graphCombine"></canvas>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-6 mb-4">
+                <div class="card shadow-sm p-3 h-100">
+                    <h6>Température</h6>
+                    <div class="ratio ratio-16x9">
+                        <canvas id="graphTemp"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6 mb-4">
+                <div class="card shadow-sm p-3 h-100">
+                    <h6>Humidité</h6>
+                    <div class="ratio ratio-16x9">
+                        <canvas id="graphHum"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6 mb-4">
+                <div class="card shadow-sm p-3 h-100">
+                    <h6>Pression</h6>
+                    <div class="ratio ratio-16x9">
+                        <canvas id="graphPression"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6 mb-4">
+                <div class="card shadow-sm p-3 h-100">
+                    <h6>Lumière</h6>
+                    <div class="ratio ratio-16x9">
+                        <canvas id="graphLum"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6 mb-4">
+                <div class="card shadow-sm p-3 h-100">
+                    <h6>Pluie</h6>
+                    <div class="ratio ratio-16x9">
+                        <canvas id="graphPluie"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6 mb-4">
+                <div class="card shadow-sm p-3 h-100">
+                    <h6>Vent (m/s)</h6>
+                    <div class="ratio ratio-16x9">
+                        <canvas id="graphVent"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 mb-4">
+                <div class="card shadow-sm p-3">
+                    <h6>Direction du Vent (Radar)</h6>
+                    <div class="ratio ratio-16x6">
+                        <canvas id="graphRadar"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
 }
-
-
 
 @code {
-    // Zone de code C# intégrée dans ta page Blazor.
+    // id du capteur affiché (exemple fixe)
+    private int id = 10;
 
+    // indicateur de chargement
+    private bool isLoading = false;
 
-    // Déclaration d'une liste qui contiendra les données des capteurs.
-    private List<DonneeCapteur>? capteurs;
+    // données brutes venant du service
+    private List<DonneeCapteur> capteurs = new();
 
-    // Méthode Blazor exécutée automatiquement au chargement de la page.
-    // elle appelle le service pour récupérer les données des capteurs et les met dans la variable capteurs.
+    // Séries destinées aux graphiques
+    private List<string> labels = new();
+    private List<double> temp = new();
+    private List<double> hum = new();
+    private List<double> press = new();
+    private List<double?> lumiere = new();
+    private List<double?> pluie = new();
+    private List<double?> ventVitesse = new();
+    private List<double?> ventDirection = new();
+
+    // Cards métriques (valeurs du dernier relevé)
+    private double dernierTemp;
+    private double dernierHum;
+    private double dernierPress;
+    private double dernierVent;
+
+    // date du dernier relevé affichée en entête
+    private DateTime? lastUpdate;
+    private string LastUpdateString => lastUpdate?.ToString("g") ?? "—";
+
     protected override async Task OnInitializedAsync()
     {
-        // On utilise le service injecté pour aller chercher les données dans la BD.
+        isLoading = true;
+        StateHasChanged();
 
-        // Appelle la méthode du service pour récupérer toutes les données depuis SQL Server.
-        capteurs = await Service.GetAllAsync();
+        try
+        {
+            await Task.Delay(300);
+            capteurs = (await Service.GetAllAsync(id)) ?? new List<DonneeCapteur>();
+            MapperDonnees();
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
     }
 
-}
+    // Conversion des DonneeCapteur en séries Chart.js (defensive null/empty handling)
+    private void MapperDonnees()
+    {
+        if (capteurs == null || !capteurs.Any())
+        {
+            labels = new List<string>();
+            temp = new List<double>();
+            hum = new List<double>();
+            press = new List<double>();
+            lumiere = new List<double?>();
+            pluie = new List<double?>();
+            ventVitesse = new List<double?>();
+            ventDirection = new List<double?>();
+            dernierTemp = dernierHum = dernierPress = dernierVent = 0;
+            lastUpdate = null;
+            return;
+        }
 
+        // S'assurer que les données sont ordonnées (récent -> premier si nécessaire)
+        // Ici on suppose que Service.GetAllAsync renvoie dans l'ordre souhaité.
+        labels = capteurs.Select(c => c.DateMesure.ToString("HH:mm")).ToList();
+        temp = capteurs.Select(c => (double)c.Temperature).ToList();
+        hum = capteurs.Select(c => (double)c.Humidite).ToList();
+        press = capteurs.Select(c => (double)c.Pression).ToList();
+
+        lumiere = capteurs.Select(c => c.Lumiere.HasValue ? (double?)c.Lumiere.Value : null).ToList();
+        pluie = capteurs.Select(c => c.Pluie.HasValue ? (double?)c.Pluie.Value : null).ToList();
+        ventVitesse = capteurs.Select(c => c.VentVitesse.HasValue ? (double?)c.VentVitesse.Value : null).ToList();
+        ventDirection = capteurs.Select(c => c.VentDirection.HasValue ? (double?)c.VentDirection.Value : null).ToList();
+
+        var last = capteurs.First();
+        dernierTemp = (double)last.Temperature;
+        dernierHum = (double)last.Humidite;
+        dernierPress = (double)last.Pression;
+        dernierVent = last.VentVitesse.HasValue ? (double)last.VentVitesse.Value : 0;
+        lastUpdate = last.DateMesure;
+    }
+
+    // Après le rendu initial, initialiser le thème et dessiner les graphiques via JS interop
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        await Task.Delay(250); // laisser le DOM stabiliser
+        await JS.InvokeVoidAsync("initTheme");
+        await RenderGraphsAsync();
+    }
+
+    // Appels JS pour rendre les graphiques (Chart.js)
+    private async Task RenderGraphsAsync()
+    {
+        await JS.InvokeVoidAsync("creerGraphiqueCombine", "graphCombine", labels, temp, hum);
+        await JS.InvokeVoidAsync("creerGraphique", "graphTemp", labels, temp, "Température");
+        await JS.InvokeVoidAsync("creerGraphique", "graphHum", labels, hum, "Humidité");
+        await JS.InvokeVoidAsync("creerGraphique", "graphPression", labels, press, "Pression");
+        await JS.InvokeVoidAsync("creerGraphique", "graphLum", labels, lumiere, "Lumière");
+        await JS.InvokeVoidAsync("creerGraphique", "graphPluie", labels, pluie, "Pluie");
+        await JS.InvokeVoidAsync("creerGraphique", "graphVent", labels, ventVitesse, "Vent");
+        await JS.InvokeVoidAsync("creerGraphiqueRadar", "graphRadar", labels, ventDirection);
+    }
+
+    // Basculer le thème sombre via JS
+    private async Task ToggleDarkMode()
+        => await JS.InvokeVoidAsync("toggleDarkMode");
+
+    // Changer la période des données (filtrage côté client après récupération)
+    private async Task ChangerPlageDonnees(ChangeEventArgs e)
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        // Sécuriser le parse du select
+        var s = e?.Value?.ToString();
+        if (!int.TryParse(s, out var heures)) heures = 0;
+
+        var all = (await Service.GetAllAsync(id)) ?? new List<DonneeCapteur>();
+
+        if (heures > 0)
+        {
+            DateTime limite = DateTime.Now.AddHours(-heures);
+            capteurs = all.Where(c => c.DateMesure >= limite).ToList();
+        }
+        else
+        {
+            capteurs = all;
+        }
+
+        MapperDonnees();
+
+        await Task.Delay(200);
+        isLoading = false;
+        StateHasChanged();
+
+        await RenderGraphsAsync();
+    }
+
+    // Rafraîchir les données depuis le service
+    private async Task ActualiserDonnees()
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        await Task.Delay(200);
+        capteurs = (await Service.GetAllAsync(id)) ?? new List<DonneeCapteur>();
+        MapperDonnees();
+
+        await Task.Delay(200);
+        isLoading = false;
+        StateHasChanged();
+
+        await RenderGraphsAsync();
+    }
+
+    // Exporter en PDF via JS (fait appel à exportPDF dans graphique.js)
+    private async Task ExporterPDF()
+        => await JS.InvokeVoidAsync("exportPDF");
+
+    // Ouvrir un ticket lié (si la fonctionnalité existe) — navigue vers la page ticket en précisant l'origine
+    private void OuvrirTicket(int id)
+    {
+        // navigation vers la page ticket (route /ticket/{id}), on précise l'origine pour le bouton retour
+        Navigation.NavigateTo($"/ticket/{id}?from=capteurs");
+    }
+}
 

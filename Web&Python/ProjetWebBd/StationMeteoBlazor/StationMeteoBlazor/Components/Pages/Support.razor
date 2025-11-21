@@ -1,107 +1,183 @@
-﻿@using StationMeteoBlazor.Data
-@using StationMeteoBlazor.Models
+﻿@* Plan (pseudocode détaillé en français) :
+   - Récupérer l'état d'authentification de façon sûre.
+   - Vérifier que AuthenticationState et User ne sont pas nuls.
+   - Récupérer la claim ClaimTypes.NameIdentifier de manière sûre (FindFirst peut renvoyer null).
+   - Tenter de parser la valeur en int avec int.TryParse.
+   - Si l'identifiant utilisateur n'est pas disponible ou non convertible, rediriger vers la page de connexion (ou quitter l'initialisation).
+   - Sinon, charger les tickets via le service.
+   - Pour la création de ticket, vérifier le texte et l'identifiant avant d'appeler le service.
+   - Préserver le reste du composant identique.
+*@
+
 @page "/support"
+@using StationMeteoBlazor.Models
+@using StationMeteoBlazor.Data
+@using StationMeteoBlazor.Authentification
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@inject AuthenticationStateProvider AuthStateProvider
 @inject SupportService Service
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+@attribute [StreamRendering]
 
-@if(ticketUsers == null)
+
+<PageTitle>Support</PageTitle>
+
+@if (tickets == null)
 {
-    <p>Chargement des données...</p>
+    <p>Chargement...</p>
 }
-/*else if (!ticketUsers.Any())
+else
 {
-    <p>Aucune donnée de capteur trouvée.</p>
-}*/
-else{
-<div class="container mt-4">
-    <h2 class="text-center mb-4">Support technique</h2>
-    <div class="row">
-        <!-- Formulaire de création -->
-        <div class="col-md-6">
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-primary text-white">
-                    Soumettre un nouveau problème
-                </div>
-                <div class="card-body">
+    <div class="container mt-4">
 
-                    <!-- Formulaire Bootstrap -->
-                    <form>
+        <h2 class="mb-4">Support technique</h2>
+
+        <div class="row">
+
+            <!-- CREATION -->
+            <div class="col-md-5">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        Nouveau ticket
+                    </div>
+
+                    <div class="card-body">
                         <div class="mb-3">
-                            <label for="probleme" class="form-label fw-semibold">Décrivez votre problème</label>
-                            <textarea id="probleme"
-                                      class="form-control"
-                                      rows="4"
-                                      placeholder="Exemple : Le capteur d'humidité ne répond plus."></textarea>
+                            <label class="form-label">Décrivez votre problème</label>
+                            <textarea class="form-control" rows="4"
+                                      @bind="probleme"
+                                      placeholder="Exemple : Le capteur d'humidité ne fonctionne plus..."></textarea>
                         </div>
 
-                        <div class="d-grid">
-                            <button type="button" class="btn btn-primary">
-                                <i class="bi bi-send"></i> Envoyer
-                            </button>
-                        </div>
-                    </form>
-
-
+                        <button class="btn btn-primary w-100" @onclick="CreerTicket">
+                            Envoyer
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Liste des tickets -->
-        <div class="col-md-6">
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-success text-white">
-                    Mes tickets précédents
-                </div>
-                <div class="card-body">
-                    <!-- Ici on mettra la liste des tickets -->
-                    @if (!ticketUsers.Any())
-                    {
-                        <p class="text-muted">Aucun ticket à afficher pour l’instant.</p>
-                    }
-                    else
-                    {
-                        <table class="table table-striped">
-                            <thead></thead>
-                            <tr>
-                                <th>IdTicket</th>
-                                <th>Nom</th>
-                                <th>Prenom</th>
-                                <th>Probleme</th>
-                                <th>Resolue</th>
-                                <th>DateDeCreation</th>
-                            </tr>
-                            <tbody>
-                                @foreach (var t in ticketUsers)
-                                {
+
+            <!-- LISTE DES TICKETS -->
+            <div class="col-md-7">
+
+                <div class="card shadow-sm">
+                    <div class="card-header bg-success text-white">
+                        Mes tickets
+                    </div>
+
+                    <div class="card-body">
+
+                        @if (!tickets.Any())
+                        {
+                            <p class="text-muted">Aucun ticket pour le moment.</p>
+                        }
+                        else
+                        {
+                            <table class="table table-hover align-middle">
+                                <thead>
                                     <tr>
-                                        <td>@t.IdTicket</td>
-                                        <td>@t.IdUtilisateur</td>
-                                        <td>@t.Nom</td>
-                                        <td>@t.Prenom</td>
-                                        <td>@t.Probleme</td>
-                                        <td>@t.Resolue</td>
-                                        <td>@t.DateCreation</td>
+                                        <th>#</th>
+                                        <th>Problème</th>
+                                        <th>État</th>
+                                        <th>Date</th>
+                                        <th></th>
                                     </tr>
-                                }
-                            </tbody>
-                        </table>
-                    }
+                                </thead>
+
+                                <tbody>
+                                    @foreach (var t in tickets)
+                                    {
+                                        <tr>
+                                            <td>@t.IdTicket</td>
+                                            <td>@t.Probleme</td>
+
+                                            <td>
+                                                @if (t.Resolue)
+                                                {
+                                                    <span class="badge bg-success">Résolu</span>
+                                                }
+                                                else
+                                                {
+
+                                                    <span class="badge bg-warning text-dark">En attente</span>
+                                                }
+                                            </td>
+
+                                            <td>@t.DateCreation.ToString("yy-MM-dd")</td>
+
+                                            <td>
+                                                <button class="btn btn-outline-primary btn-sm"
+                                                        @onclick="() => OuvrirTicket(t.IdTicket)">
+                                                    Voir
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+
+                            </table>
+                        }
+
+                    </div>
                 </div>
+
             </div>
+
         </div>
+
     </div>
-</div>
 }
-
-
 
 @code {
-
-    private List<VTicketsAvecUser>? ticketUsers;
-    private int id = 10;
+    private List<VTicketsAvecUser>? tickets;
+    private string probleme = "";
+    private int idUtilisateur;
 
     protected override async Task OnInitializedAsync()
     {
-        ticketUsers = await Service.GetTicketUser(id);
+        // Récupération sûre de l'état d'authentification
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState?.User;
+
+        // Récupérer la claim NameIdentifier de manière sûre
+        var idClaimValue = user?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        // Tenter de parser en int
+        if (!int.TryParse(idClaimValue, out idUtilisateur))
+        {
+            // Si échec, rediriger vers la page de connexion (ou gérer autrement)
+            Navigation.NavigateTo("/login");
+            return;
+        }
+
+        await Task.Delay(300);
+        tickets = await Service.GetTicketUser(idUtilisateur);
+    }
+
+    private async Task CreerTicket()
+    {
+        if (string.IsNullOrWhiteSpace(probleme))
+            return;
+
+        if (idUtilisateur <= 0)
+        {
+            // sécurité : s'assurer que l'utilisateur est connu
+            Navigation.NavigateTo("/login");
+            return;
+        }
+
+        await Service.CreerTicket(idUtilisateur, probleme);
+        probleme = "";
+
+        tickets = await Service.GetTicketUser(idUtilisateur);
+    }
+
+    private void OuvrirTicket(int id)
+    {
+        // navigation vers une route qui contient l'id, plus besoin de LocalState
+        Navigation.NavigateTo($"/ticket/{id}");
     }
 
 }
