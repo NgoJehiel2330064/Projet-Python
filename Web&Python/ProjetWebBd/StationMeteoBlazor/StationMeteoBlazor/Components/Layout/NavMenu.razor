@@ -48,7 +48,6 @@
                             <i class="bi dark-mode-icon @(isDark ? "bi-sun-fill" : "bi-moon-stars")"></i>
                         </button>
 
-                        <!-- Bouton déconnexion toujours visible (suppression des classes d-none / responsive) -->
                         <LogoutButton CssClass="btn btn-sm btn-outline-danger align-items-center gap-1" RedirectUrl="/login" Confirm="true" />
 
                         <div class="dropdown">
@@ -72,9 +71,6 @@
                                 </li>
                             </ul>
                         </div>
-
-                        <!-- (Optionnel) Bouton mobile supplémentaire retiré car le principal est maintenant visible partout -->
-                        @* <LogoutButton CssClass="btn btn-sm btn-danger d-lg-none" RedirectUrl="/login" Confirm="true" /> *@
                     </div>
                 </Authorized>
 
