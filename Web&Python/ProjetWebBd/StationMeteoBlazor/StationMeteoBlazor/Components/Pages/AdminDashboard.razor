@@ -1,4 +1,6 @@
 ﻿@page "/admin-dashboard"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Admin")]
 @using StationMeteoBlazor.Data
 @using StationMeteoBlazor.Models
 @using Microsoft.AspNetCore.Components.Authorization
