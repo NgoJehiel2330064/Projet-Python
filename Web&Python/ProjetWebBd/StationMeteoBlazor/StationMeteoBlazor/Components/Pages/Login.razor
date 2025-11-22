@@ -4,81 +4,131 @@
 @rendermode InteractiveServer
 @inject LoginService Service
 @using StationMeteoBlazor.Authentification
-@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Navigation
 @inject IJSRuntime JS
 @page "/login"
-@inject NavigationManager Navigation
 
 <PageTitle>Connexion</PageTitle>
 
+<div class="login-hero position-relative">
+    <div class="hero-overlay"></div>
+    <div class="container py-5 position-relative">
+        <div class="row justify-content-center">
+            <div class="col-xl-5 col-lg-6">
+                <div class="glass-card shadow-lg">
+                    <div class="text-center mb-4">
+                        <div class="login-icon mb-3">
+                            <i class="bi bi-cloud-sun-fill"></i>
+                        </div>
+                        <h2 class="fw-bold mb-1">Bienvenue</h2>
+                        <p class="text-muted mb-0 small">Connectez-vous pour accéder à votre station météo intelligente.</p>
+                    </div>
 
-<div class="container mt-5" style="max-width: 420px;">
-    <div class="card shadow-sm border-0">
-        <div class="card-header bg-primary text-white fw-semibold text-center">
-            Connexion à la Station Météo
+                    <div class="mb-3">
+                        <label for="email" class="form-label fw-semibold">Adresse courriel</label>
+                        <div class="input-group fancy-input">
+                            <span class="input-group-text bg-white"><i class="bi bi-envelope"></i></span>
+                            <input type="email" id="email" autocomplete="username"
+                                   class="form-control"
+                                   placeholder="exemple@cegepjonquiere.ca"
+                                   @bind="user.Email">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="motdepasse" class="form-label fw-semibold d-flex justify-content-between align-items-center">
+                            <span>Mot de passe</span>
+                            <button type="button" class="btn btn-link p-0 small" @onclick="ToggleMask">
+                                <i class="bi @(showPassword ? "bi-eye-slash" : "bi-eye")"></i> Afficher
+                            </button>
+                        </label>
+                        <div class="input-group fancy-input">
+                            <span class="input-group-text bg-white"><i class="bi bi-lock"></i></span>
+                            <input type="@(_inputType)" id="motdepasse" autocomplete="current-password"
+                                   class="form-control"
+                                   placeholder="Votre mot de passe"
+                                   @bind="user.MotDePasseNonHash">
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="remember" @bind="rememberMe">
+                            <label class="form-check-label small" for="remember">Se souvenir de moi</label>
+                        </div>
+                        <a href="#" class="small text-decoration-none">Mot de passe oublié ?</a>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-primary btn-lg gradient-btn shadow-sm"
+                                disabled="@isAuthenticating"
+                                @onclick="ConnexionAsync">
+                            @if (isAuthenticating)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2"></span>
+                                <span>Connexion...</span>
+                            }
+                            else
+                            {
+                                <span><i class="bi bi-box-arrow-in-right me-1"></i> Se connecter</span>
+                            }
+                        </button>
+                    </div>
+
+                    <div class="text-center mt-3">
+                        <small class="text-muted">Pas encore de compte ?
+                            <a href="/register" class="text-decoration-none fw-semibold">Inscription</a>
+                        </small>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(message))
+                    {
+                        <div class="alert mt-4 py-2 px-3 fade-in @(messageOk ? "alert-success" : "alert-danger")">
+                            <i class="bi @(messageOk ? "bi-check-circle-fill" : "bi-exclamation-triangle-fill") me-1"></i>
+                            @message
+                        </div>
+                    }
+                </div>
+            </div>
         </div>
+    </div>
 
-        <div class="card-body">
-            <div class="mb-3">
-                <label for="email" class="form-label fw-semibold">Adresse courriel</label>
-                <input type="email" id="email" class="form-control" placeholder="exemple@cegepjonquiere.ca" @bind="user.Email">
-            </div>
-
-            <div class="mb-3">
-                <label for="motdepasse" class="form-label fw-semibold">Mot de passe</label>
-                <input type="password" id="motdepasse" class="form-control" placeholder="Votre mot de passe" @bind="user.MotDePasseNonHash">
-            </div>
-
-            <div class="d-grid">
-                <button class="btn btn-primary" @onclick="ConnexionAsync">
-                    <i class="bi bi-box-arrow-in-right"></i> Se connecter
-                </button>
-            </div>
-
-            <div class="text-center mt-3">
-                <small class="text-muted">Pas encore de compte ? <a href="/register">Inscription</a></small>
-            </div>
-            <hr />
-            <p>@message</p>
-        </div>
+    <div class="bottom-wave">
+        <svg viewBox="0 0 1200 120" preserveAspectRatio="none">
+            <path d="M985.66,92.83C906.67,72,823.78,31,743.84,14.19c-82.26-17.34-168.06-16.33-250.45.39-57.86,11.73-114,31.07-172,41.86A600.21,600.21,0,0,1,0,27.35V120H1200V95.83C1132.19,118.92,1055.71,111.31,985.66,92.83Z"
+                  fill="#fff"></path>
+        </svg>
     </div>
 </div>
 
 @code {
-    /*
-    Plan (pseudocode détaillé) :
-    1. Appeler le service de connexion pour obtenir l'Id utilisateur.
-    2. Si l'Id > 0, caster AuthenticationStateProvider vers CustomAuthenticationStateProvider en utilisant 'as'.
-       - Vérifier que le cast a réussi (!= null).
-       - Appeler la méthode d'instance UpdateAuthenticationState sur cette instance.
-    3. Naviguer vers la page des capteurs.
-    4. Sinon, afficher un message d'erreur.
-    5. Gérer les exceptions.
-    Remarque : l'erreur CS0120 se produit parce qu'on appelait la méthode d'instance comme si elle était statique.
-    La correction consiste à appeler la méthode sur l'instance (ex: connexAuth.UpdateAuthenticationState(...)).
-    */
-
     private string message = string.Empty;
+    private bool messageOk;
+    private bool isAuthenticating;
     private int Idutilisateur;
     private string role = string.Empty;
-
     private Utilisateur user = new Utilisateur();
+    private bool rememberMe;
+    private bool showPassword;
+    private string _inputType => showPassword ? "text" : "password";
 
     private async Task ConnexionAsync()
     {
-        await Task.Delay(500);
+        if (isAuthenticating) return;
+        isAuthenticating = true;
+        message = string.Empty;
+        messageOk = false;
 
         try
         {
             var result = await Service.SeConnecter(user.Email, user.MotDePasseNonHash);
             Idutilisateur = result.Id;
             role = result.Role;
+
             if (Idutilisateur > 0)
             {
-                // message = $"Connexion réussie : ID {Idutilisateur}";
-
-                // Caster correctement en utilisant 'as' et appeler la méthode d'instance
-                var connexAuth = AuthenticationStateProvider as CustomAuthenticationStateProvider;
+                var connexAuth = AuthStateProvider as CustomAuthenticationStateProvider;
                 if (connexAuth != null)
                 {
                     await connexAuth.UpdateAuthenticationState(new UserSession
@@ -88,30 +138,104 @@
                         UserId = Idutilisateur
                     });
                 }
-                else
-                {
-                    // Optionnel : log ou message si le cast échoue
-                    message += " (Impossible de mettre à jour l'état d'authentification)";
-                }
-                if (role == "User")
-                {
-                    Navigation.NavigateTo("/capteurs");
-                    return;
-                }
-                else
-                {
-                    Navigation.NavigateTo("/admin-dashboard");
 
-                }
+                messageOk = true;
+                message = "Connexion réussie. Redirection...";
+                await Task.Delay(700);
+
+                if (role == "User")
+                    Navigation.NavigateTo("/capteurs");
+                else
+                    Navigation.NavigateTo("/admin-dashboard");
             }
             else
             {
-                message = $"Échec de connexion. Veuillez vérifier vos identifiants ou votre mot de passe.";
+                messageOk = false;
+                message = "Identifiants invalides. Vérifiez votre courriel ou mot de passe.";
             }
         }
         catch (Exception ex)
         {
+            messageOk = false;
             message = $"Erreur : {ex.Message}";
         }
+        finally
+        {
+            isAuthenticating = false;
+        }
     }
+
+    private void ToggleMask() => showPassword = !showPassword;
 }
+
+<style>
+    .login-hero {
+        min-height:100vh;
+        background:
+            radial-gradient(circle at 20% 20%, rgba(102,126,234,.35), transparent 60%),
+            radial-gradient(circle at 85% 30%, rgba(118,75,162,.35), transparent 65%),
+            linear-gradient(135deg,#667eea,#764ba2);
+        position:relative;
+        overflow:hidden;
+    }
+    .hero-overlay { position:absolute;inset:0; backdrop-filter: blur(2px); }
+    .glass-card {
+        background:rgba(255,255,255,.82);
+        border-radius:24px;
+        padding:2.2rem 2rem 2rem;
+        position:relative;
+        overflow:hidden;
+    }
+    .glass-card:before {
+        content:"";position:absolute;inset:0;
+        background:
+            linear-gradient(115deg,rgba(255,255,255,.6),rgba(255,255,255,.15)),
+            radial-gradient(circle at 80% 10%,rgba(102,126,234,.25),transparent 60%);
+        mix-blend-mode: screen;
+        pointer-events:none;
+    }
+    .login-icon {
+        width:70px;height:70px;border-radius:18px;
+        background:linear-gradient(135deg,#667eea,#764ba2);
+        display:flex;align-items:center;justify-content:center;
+        color:#fff;font-size:2rem;
+        box-shadow:0 8px 24px rgba(0,0,0,.18);
+        animation: floatPulse 4s ease-in-out infinite;
+    }
+    .fancy-input .form-control { border-top-right-radius:12px; border-bottom-right-radius:12px; }
+    .fancy-input .input-group-text { border-top-left-radius:12px; border-bottom-left-radius:12px; border-right:0; }
+    .gradient-btn { background:linear-gradient(135deg,#667eea,#764ba2); border:none; }
+    .gradient-btn:hover { filter:brightness(1.08); }
+    .bottom-wave { position:absolute;bottom:0;left:0;width:100%;line-height:0; }
+    .bottom-wave svg { display:block;width:100%;height:80px; }
+
+    .fade-in { animation: fadeIn .5s ease; }
+
+    @@keyframes fadeIn {
+        from { opacity:0; transform:translateY(10px); }
+        to { opacity:1; transform:translateY(0); }
+    }
+    @@keyframes floatPulse {
+        0%, 100% { transform:translateY(0); }
+        50% { transform:translateY(-8px); }
+    }
+
+    @@media (max-width: 576px) {
+        .glass-card { padding:1.7rem 1.4rem 1.4rem; }
+        .login-icon { width:60px;height:60px;font-size:1.6rem; }
+    }
+
+    body.dark-mode .login-hero {
+        background:
+            radial-gradient(circle at 20% 20%, rgba(50,65,120,.55), transparent 60%),
+            radial-gradient(circle at 85% 30%, rgba(80,50,110,.55), transparent 65%),
+            linear-gradient(135deg,#2c3e50,#4b486e);
+    }
+    body.dark-mode .glass-card { background:rgba(40,40,48,.85); color:#e4e4e4; }
+    body.dark-mode .glass-card:before {
+        background:
+            linear-gradient(115deg,rgba(255,255,255,.05),rgba(255,255,255,.02)),
+            radial-gradient(circle at 80% 10%,rgba(110,90,200,.25),transparent 60%);
+    }
+    body.dark-mode .gradient-btn { background:linear-gradient(135deg,#4e7cf8,#7b5dfb); }
+</style>

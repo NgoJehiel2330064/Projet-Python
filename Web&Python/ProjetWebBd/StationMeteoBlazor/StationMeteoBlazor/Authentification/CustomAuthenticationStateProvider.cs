@@ -64,5 +64,10 @@ namespace StationMeteoBlazor.Authentification
 
             NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(claimsPrincipal)));
         }
+
+        public async Task LogoutAsync()
+        {
+            await UpdateAuthenticationState(null);
+        }
     }
 }

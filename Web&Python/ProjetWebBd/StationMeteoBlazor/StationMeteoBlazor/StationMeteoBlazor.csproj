@@ -16,8 +16,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Components\Shared\" />
-    <Folder Include="Components\Shared\" />
     <Folder Include="Data\" />
     <Folder Include="Services\" />
     <Folder Include="Models\" />

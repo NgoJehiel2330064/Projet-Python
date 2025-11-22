@@ -1,98 +1,132 @@
-﻿<!-- Navbar -->
-<nav class="navbar navbar-expand-lg bg-body-tertiary ">
-  <!-- Container wrapper -->
-  <div class="container-fluid ">
-    <!-- Toggle button -->
-    <button
-      data-mdb-collapse-init
-      class="navbar-toggler"
-      type="button"
-      data-mdb-target="#navbarSupportedContent"
-      aria-controls="navbarSupportedContent"
-      aria-expanded="false"
-      aria-label="Toggle navigation"
-    >
-      <i class="fas fa-bars"></i>
-    </button>
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@using StationMeteoBlazor.Authentification
+@using StationMeteoBlazor.Components.Shared
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+@implements IDisposable
 
-    <!-- Collapsible wrapper -->
-    <div class="collapse navbar-collapse" id="navbarSupportedContent">
-      <!-- Navbar brand -->
-      <a class="navbar-brand mt-2 mt-lg-0" href="#">
-        <img
-          src="https://mdbcdn.b-cdn.net/img/logo/mdb-transaprent-noshadows.webp"
-          height="15"
-          alt="MDB Logo"
-          loading="lazy"
-        />
-      </a>
-      <!-- Left links -->
-      <ul class=" bg-danger navbar-nav mx-auto mb-2 mb-lg-0  ">
-        <li class="p-2 nav-item">
-          <a class="nav-link" href="#">Dashboard</a>
-        </li>
-         <li class="p-2 nav-item">
-          <a class="nav-link" href="#">Team</a>
-        </li>
-        <li class="p-2 nav-item">
-          <a class="nav-link" href="#">Projects</a>
-        </li>
-      </ul>
-      <!-- Left links -->
-    </div>
-    <!-- Collapsible wrapper -->
-
-    <!-- Right elements -->
-    <div class=" d-flex align-items-center">
-
-      <!-- Notifications -->
-        <div class="badge-notification">
-          <i class="bi bi-bell">
-                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                        9+
-                        <span class="visually-hidden">unread notifications</span>
-                    </span>
-          </i>
-
-
-        </div>
-      <!-- Avatar -->
-      <div class="dropdown">
-        <a
-          data-mdb-dropdown-init
-          class="dropdown-toggle d-flex align-items-center hidden-arrow"
-          href="#"
-          id="navbarDropdownMenuAvatar"
-          role="button"
-          aria-expanded="false"
-        >
-          <img
-            src="https://mdbcdn.b-cdn.net/img/new/avatars/2.webp"
-            class="rounded-circle"
-            height="25"
-            alt="Black and White Portrait of a Man"
-            loading="lazy"
-          />
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+    <div class="container-fluid">
+        <a class="navbar-brand fw-bold text-primary" href="/">
+            <i class="bi bi-cloud-sun"></i> Station Météo
         </a>
-        <ul
-          class="dropdown-menu dropdown-menu-end"
-          aria-labelledby="navbarDropdownMenuAvatar"
-        >
-          <li>
-            <a class="dropdown-item" href="#">My profile</a>
-          </li>
-          <li>
-            <a class="dropdown-item" href="#">Settings</a>
-          </li>
-          <li>
-            <a class="dropdown-item" href="#">Logout</a>
-          </li>
-        </ul>
-      </div>
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarContent">
+            <AuthorizeView>
+                <Authorized Context="auth">
+                    <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
+                        <AuthorizeView Roles="User">
+                            <Authorized>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="/capteurs"><i class="bi bi-speedometer2"></i> Dashboard</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="/support"><i class="bi bi-headset"></i> Support</a>
+                                </li>
+                            </Authorized>
+                        </AuthorizeView>
+
+                        <AuthorizeView Roles="Admin">
+                            <Authorized>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="/admin-dashboard"><i class="bi bi-kanban"></i> Admin</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="/support-admin"><i class="bi bi-ticket-detailed"></i> Tickets</a>
+                                </li>
+                            </Authorized>
+                        </AuthorizeView>
+                    </ul>
+
+                    <div class="d-flex align-items-center gap-2">
+                        <button class="btn btn-sm btn-outline-secondary" @onclick="ToggleDarkMode" title="Mode sombre">
+                            <i class="bi dark-mode-icon @(isDark ? "bi-sun-fill" : "bi-moon-stars")"></i>
+                        </button>
+
+                        <!-- Bouton déconnexion toujours visible (suppression des classes d-none / responsive) -->
+                        <LogoutButton CssClass="btn btn-sm btn-outline-danger align-items-center gap-1" RedirectUrl="/login" Confirm="true" />
+
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-primary dropdown-toggle d-flex align-items-center gap-2"
+                                    type="button" id="userDropdown" data-bs-toggle="dropdown">
+                                <img src="https://ui-avatars.com/api/?name=@(auth.User.Identity?.Name ?? "U")&background=1b6ec2&color=fff"
+                                     class="rounded-circle" height="28" alt="Avatar" />
+                                <span class="d-none d-md-inline">@auth.User.Identity?.Name</span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow">
+                                <li class="dropdown-item-text">
+                                    <small class="text-muted">Connecté</small><br />
+                                    <strong>@auth.User.Identity?.Name</strong>
+                                </li>
+                                <li><hr class="dropdown-divider" /></li>
+                                <li><a class="dropdown-item" href="#"><i class="bi bi-person-circle"></i> Profil</a></li>
+                                <li><a class="dropdown-item" href="#"><i class="bi bi-gear"></i> Paramètres</a></li>
+                                <li><hr class="dropdown-divider" /></li>
+                                <li>
+                                    <LogoutButton CssClass="dropdown-item text-danger" RedirectUrl="/login" Confirm="true" />
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- (Optionnel) Bouton mobile supplémentaire retiré car le principal est maintenant visible partout -->
+                        @* <LogoutButton CssClass="btn btn-sm btn-danger d-lg-none" RedirectUrl="/login" Confirm="true" /> *@
+                    </div>
+                </Authorized>
+
+                <NotAuthorized>
+                    <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/login"><i class="bi bi-box-arrow-in-right"></i> Connexion</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="btn btn-primary btn-sm ms-2" href="/register">
+                                <i class="bi bi-person-plus"></i> Inscription
+                            </a>
+                        </li>
+                    </ul>
+                </NotAuthorized>
+            </AuthorizeView>
+        </div>
     </div>
-    <!-- Right elements -->
-  </div>
-  <!-- Container wrapper -->
 </nav>
-<!-- Navbar -->
+
+@code {
+    private bool isDark;
+
+    protected override Task OnInitializedAsync()
+    {
+        AuthStateProvider.AuthenticationStateChanged += OnAuthenticationStateChanged;
+        return Task.CompletedTask;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var saved = await JS.InvokeAsync<string>("localStorage.getItem", "theme");
+            if (saved == "dark")
+            {
+                isDark = true;
+                StateHasChanged();
+            }
+        }
+    }
+
+    private async Task ToggleDarkMode()
+    {
+        await JS.InvokeVoidAsync("toggleDarkMode");
+        isDark = !isDark;
+    }
+
+    private void OnAuthenticationStateChanged(Task<AuthenticationState> task) =>
+        InvokeAsync(StateHasChanged);
+
+    public void Dispose() =>
+        AuthStateProvider.AuthenticationStateChanged -= OnAuthenticationStateChanged;
+}
 

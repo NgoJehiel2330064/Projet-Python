@@ -9,64 +9,136 @@
 @rendermode InteractiveServer
 @attribute [StreamRendering]
 
-<PageTitle>Ticket</PageTitle>
+<PageTitle>Ticket #@IdTicket</PageTitle>
 
-@if (tickets == null)
+@if (ticket == null)
 {
-    <p>Chargement...</p>
+    <div class="container py-5">
+        <div class="skeleton-header mb-4"></div>
+        <div class="skeleton-block mb-3"></div>
+        <div class="skeleton-block"></div>
+    </div>
 }
 else
 {
-    <div class="container mt-4">
-
-        <button class="btn btn-secondary mb-3" @onclick="Retour">
-            ← Retour
-        </button>
-
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-primary text-white">
-                Ticket #@tickets.IdTicket
-            </div>
-
-            <div class="card-body">
-                <p><strong>Nom :</strong> @tickets.Nom</p>
-                <p><strong>Prénom :</strong> @tickets.Prenom</p>
-                <p><strong>Problème :</strong> @tickets.Probleme</p>
-                <p><strong>Date :</strong> @tickets.DateCreation</p>
-            </div>
-        </div>
-
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-success text-white">Discussion</div>
-            <div class="card-body">
-
-                @if (!commentaires.Any())
+    <div class="container py-4 ticket-wrapper">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+            <div class="d-flex align-items-center gap-3">
+                <button class="btn btn-outline-secondary btn-sm" @onclick="Retour">
+                    <i class="bi bi-arrow-left"></i>
+                </button>
+                <h3 class="fw-bold mb-0 d-flex align-items-center gap-2">
+                    <span class="ticket-icon"><i class="bi bi-life-preserver"></i></span>
+                    Ticket #@ticket.IdTicket
+                </h3>
+                @if (ticket.Resolue)
                 {
-                    <p class="text-muted">Aucun commentaire.</p>
+                    <span class="status-badge resolved"><i class="bi bi-check2-circle me-1"></i>Résolu</span>
                 }
                 else
                 {
-                    @foreach (var c in commentaires)
-                    {
-                        <div class="border rounded p-3 mb-3">
-                            <strong>@c.Nom @c.Prenom</strong>
-                            <small class="text-muted float-end">@c.DateCommentaire</small>
-                            <p class="mt-2">@c.Reponse</p>
-                        </div>
-                    }
+                    <span class="status-badge pending"><i class="bi bi-hourglass-split me-1"></i>En attente</span>
                 }
-
             </div>
+            @if (isAdmin && !ticket.Resolue)
+            {
+                <button class="btn btn-success btn-sm shadow-sm" @onclick="MarquerResolue">
+                    <i class="bi bi-check2"></i> Marquer comme résolu
+                </button>
+            }
         </div>
 
-        <div class="card shadow-sm">
-            <div class="card-header bg-dark text-white">Ajouter un commentaire</div>
-            <div class="card-body">
-                <textarea class="form-control" rows="3" @bind="nouvelleReponse"></textarea>
+        <div class="row g-4">
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm ticket-info">
+                    <div class="card-header bg-transparent border-0 pb-0">
+                        <h5 class="fw-bold mb-1 d-flex align-items-center gap-2">
+                            <i class="bi bi-info-circle text-primary"></i> Détails
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <dl class="row mb-0 ticket-details">
+                            <dt class="col-sm-4">Utilisateur</dt>
+                            <dd class="col-sm-8">@ticket.Nom @ticket.Prenom</dd>
 
-                <button class="btn btn-primary mt-2" @onclick="EnvoyerCommentaire">
-                    Envoyer
-                </button>
+                            <dt class="col-sm-4">Date création</dt>
+                            <dd class="col-sm-8">@ticket.DateCreation.ToString("dd/MM/yyyy HH:mm")</dd>
+
+                            <dt class="col-sm-4">Statut</dt>
+                            <dd class="col-sm-8">
+                                @if (ticket.Resolue)
+                                {
+                                    <span class="status-badge resolved">Résolu</span>
+                                }
+                                else
+                                {
+                                    <span class="status-badge pending">En attente</span>
+                                }
+                            </dd>
+                        </dl>
+                        <div class="mt-3">
+                            <h6 class="fw-semibold">Problème</h6>
+                            <p class="problem-text mb-0">@ticket.Probleme</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm comments-card">
+                    <div class="card-header bg-transparent border-0 pb-0">
+                        <h5 class="fw-bold mb-1 d-flex align-items-center gap-2">
+                            <i class="bi bi-chat-left-text text-success"></i> Discussion (@commentaires.Count)
+                        </h5>
+                    </div>
+                    <div class="card-body comments-scroll">
+                        @if (!commentaires.Any())
+                        {
+                            <div class="empty-state text-center py-4">
+                                <div class="empty-icon mb-3"><i class="bi bi-chat-dots"></i></div>
+                                <h6 class="fw-bold mb-1">Aucun commentaire</h6>
+                                <p class="text-muted small mb-0">Commencez la discussion ci-dessous.</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <ul class="timeline list-unstyled mb-0">
+                                @foreach (var c in commentaires.OrderByDescending(c => c.DateCommentaire))
+                                {
+                                    <li class="timeline-item">
+                                        <div class="timeline-marker"></div>
+                                        <div class="timeline-content">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <strong>@c.Nom @c.Prenom</strong>
+                                                <small class="text-muted">@c.DateCommentaire.ToString("dd/MM HH:mm")</small>
+                                            </div>
+                                            <p class="mb-0 mt-2 comment-text">@c.Reponse</p>
+                                        </div>
+                                    </li>
+                                }
+                            </ul>
+                        }
+                    </div>
+                    <div class="card-footer bg-transparent border-0">
+                        <div class="input-group">
+                            <textarea class="form-control rounded" rows="3" @bind="nouvelleReponse"
+                                      placeholder="Ajouter un commentaire..."></textarea>
+                        </div>
+                        <div class="d-flex justify-content-end mt-2">
+                            <button class="btn btn-primary btn-sm shadow-sm"
+                                    disabled="@string.IsNullOrWhiteSpace(nouvelleReponse)"
+                                    @onclick="EnvoyerCommentaire">
+                                <i class="bi bi-send-fill"></i> Envoyer
+                            </button>
+                        </div>
+                        @if (showToast)
+                        {
+                            <div class="alert alert-success mt-2 py-2 px-3 fade-in">
+                                <i class="bi bi-check-circle-fill me-1"></i> Commentaire ajouté.
+                            </div>
+                        }
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -74,19 +146,18 @@ else
 }
 
 @code {
-    [Parameter]
-    public int IdTicket { get; set; }
+    [Parameter] public int IdTicket { get; set; }
 
-    VTicketsAvecUser? tickets;
+    VTicketsAvecUser? ticket;
     List<VCommentaire> commentaires = new();
 
     string nouvelleReponse = "";
     private int currentUserId;
     private bool isAdmin = false;
+    private bool showToast;
 
     protected override async Task OnInitializedAsync()
     {
-        // récupérer l'utilisateur connecté
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState?.User;
         var idClaimValue = user?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -99,16 +170,14 @@ else
 
         isAdmin = user?.IsInRole("Admin") == true;
 
-        // charger le ticket par id de route
-        tickets = await Service.GetTicketById(IdTicket);
-        if (tickets == null)
+        ticket = await Service.GetTicketById(IdTicket);
+        if (ticket == null)
         {
             Navigation.NavigateTo("/support");
             return;
         }
 
-        // contrôle d'accès : autoriser si admin OU propriétaire du ticket
-        if (!isAdmin && tickets.IdUtilisateur != currentUserId)
+        if (!isAdmin && ticket.IdUtilisateur != currentUserId)
         {
             Navigation.NavigateTo("/support");
             return;
@@ -120,12 +189,20 @@ else
     private async Task EnvoyerCommentaire()
     {
         if (string.IsNullOrWhiteSpace(nouvelleReponse)) return;
-
         await Service.AjouterCommentaire(IdTicket, currentUserId, nouvelleReponse);
-
         nouvelleReponse = "";
-
         commentaires = await Service.GetCommentaires(IdTicket) ?? new List<VCommentaire>();
+        showToast = true;
+        await Task.Delay(1500);
+        showToast = false;
+    }
+
+    private async Task MarquerResolue()
+    {
+        if (ticket == null || ticket.Resolue) return;
+        await Service.MarquerCommeResolue(ticket.IdTicket);
+        ticket.Resolue = true;
+        StateHasChanged();
     }
 
     private async Task Retour()
@@ -135,7 +212,6 @@ else
 
         if (user?.IsInRole("Admin") == true)
         {
-            // Si l'admin vient d'une page précise (param "from"), respecter l'origine
             var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
             var qs = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
             if (qs.TryGetValue("from", out var from))
@@ -147,7 +223,6 @@ else
                     return;
                 }
             }
-
             Navigation.NavigateTo("/admin-dashboard");
         }
         else
@@ -156,3 +231,65 @@ else
         }
     }
 }
+
+<style>
+    .ticket-wrapper { animation: fadeIn .4s ease; }
+    .ticket-icon {
+        width:52px;height:52px;border-radius:16px;
+        display:flex;align-items:center;justify-content:center;
+        background:linear-gradient(135deg,#3b82f6,#6366f1);color:#fff;
+        box-shadow:0 4px 14px rgba(0,0,0,.18);
+    }
+    .ticket-info,.comments-card { border-radius:20px; }
+    .problem-text { font-size:.9rem; line-height:1.4; }
+
+    .status-badge {
+        display:inline-flex;align-items:center;gap:.35rem;
+        padding:.4rem .75rem;font-size:.65rem;font-weight:600;
+        border-radius:30px;text-transform:uppercase;letter-spacing:.5px;
+    }
+    .status-badge.resolved { background:#e7f9ed;color:#1d8236;border:1px solid #b5e8c3; }
+    .status-badge.pending { background:#fff7e1;color:#946300;border:1px solid #f3d595; }
+
+    .comments-scroll { max-height:420px; overflow-y:auto; }
+    .timeline { position:relative; padding-left:1.2rem; }
+    .timeline-item { position:relative; margin-bottom:1.2rem; }
+    .timeline-item:last-child { margin-bottom:0; }
+    .timeline-marker {
+        position:absolute; left:-1.2rem; top:.4rem;
+        width:12px;height:12px;border-radius:50%;
+        background:linear-gradient(135deg,#3b82f6,#6366f1);
+        box-shadow:0 0 0 4px rgba(59,130,246,.25);
+    }
+    .timeline:before {
+        content:""; position:absolute; left:-.75rem; top:0; bottom:0;
+        width:3px; background:linear-gradient(180deg,#e0e7ff,#eef2ff);
+    }
+    .comment-text { font-size:.85rem; }
+
+    .empty-state .empty-icon {
+        width:60px;height:60px;border-radius:14px;
+        background:linear-gradient(135deg,#e0e7ff,#f1f5ff);
+        display:flex;align-items:center;justify-content:center;
+        font-size:1.6rem;color:#3b82f6;margin:0 auto;
+    }
+
+    .input-group textarea { border-radius:14px; }
+
+    .fade-in { animation: fadeIn .4s ease; }
+
+    .skeleton-header,.skeleton-block {
+        background:linear-gradient(90deg,#ececec 25%,#f5f5f5 40%,#ececec 60%);
+        background-size:200% 100%; animation: shimmer 1.2s infinite;
+        border-radius:16px;
+    }
+    .skeleton-header { height:70px; }
+    .skeleton-block { height:180px; }
+
+    @@keyframes fadeIn { from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
+    @@keyframes shimmer { from{background-position:0 0;} to{background-position:-200% 0;} }
+
+    @@media (max-width: 991px){
+        .comments-scroll { max-height:none; }
+    }
+</style>

@@ -1,15 +1,4 @@
-﻿@* Plan (pseudocode détaillé en français) :
-   - Récupérer l'état d'authentification de façon sûre.
-   - Vérifier que AuthenticationState et User ne sont pas nuls.
-   - Récupérer la claim ClaimTypes.NameIdentifier de manière sûre (FindFirst peut renvoyer null).
-   - Tenter de parser la valeur en int avec int.TryParse.
-   - Si l'identifiant utilisateur n'est pas disponible ou non convertible, rediriger vers la page de connexion (ou quitter l'initialisation).
-   - Sinon, charger les tickets via le service.
-   - Pour la création de ticket, vérifier le texte et l'identifiant avant d'appeler le service.
-   - Préserver le reste du composant identique.
-*@
-
-@page "/support"
+﻿@page "/support"
 @using StationMeteoBlazor.Models
 @using StationMeteoBlazor.Data
 @using StationMeteoBlazor.Authentification
@@ -21,110 +10,187 @@
 @rendermode InteractiveServer
 @attribute [StreamRendering]
 
-
 <PageTitle>Support</PageTitle>
 
 @if (tickets == null)
 {
-    <p>Chargement...</p>
+    <div class="container py-5">
+        <div class="row g-4">
+            @for (int i = 0; i < 3; i++)
+            {
+                <div class="col-md-4">
+                    <div class="skeleton-card"></div>
+                </div>
+            }
+        </div>
+        <div class="skeleton-table mt-4"></div>
+    </div>
 }
 else
 {
-    <div class="container mt-4">
+    <div class="container py-4 support-wrapper">
 
-        <h2 class="mb-4">Support technique</h2>
+        <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between mb-4 gap-3">
+            <h2 class="fw-bold m-0 d-flex align-items-center gap-2">
+                <span class="support-title-icon">
+                    <i class="bi bi-life-preserver"></i>
+                </span>
+                Support technique
+            </h2>
 
-        <div class="row">
+            <div class="d-flex flex-wrap gap-2">
+                <div class="stat-chip bg-gradient-primary">
+                    <div class="stat-label">Total</div>
+                    <div class="stat-value">@tickets.Count</div>
+                </div>
+                <div class="stat-chip bg-gradient-success">
+                    <div class="stat-label">Résolus</div>
+                    <div class="stat-value">@tickets.Count(t=>t.Resolue)</div>
+                </div>
+                <div class="stat-chip bg-gradient-warning">
+                    <div class="stat-label">En attente</div>
+                    <div class="stat-value">@tickets.Count(t=>!t.Resolue)</div>
+                </div>
+            </div>
+        </div>
 
+        <div class="row g-4">
             <!-- CREATION -->
-            <div class="col-md-5">
-                <div class="card shadow-sm">
-                    <div class="card-header bg-primary text-white">
-                        Nouveau ticket
+            <div class="col-lg-5">
+                <div class="card h-100 shadow-sm border-0 new-ticket-card">
+                    <div class="card-header bg-transparent border-0 pb-0">
+                        <h5 class="fw-bold mb-1 d-flex align-items-center gap-2">
+                            <i class="bi bi-plus-circle text-primary"></i>
+                            Nouveau ticket
+                        </h5>
+                        <p class="text-muted small mb-0">Expliquez clairement le souci rencontré.</p>
                     </div>
-
                     <div class="card-body">
                         <div class="mb-3">
-                            <label class="form-label">Décrivez votre problème</label>
-                            <textarea class="form-control" rows="4"
+                            <label class="form-label fw-semibold">Description du problème</label>
+                            <textarea class="form-control ticket-textarea"
+                                      rows="6"
                                       @bind="probleme"
-                                      placeholder="Exemple : Le capteur d'humidité ne fonctionne plus..."></textarea>
+                                      placeholder="Exemple : Le capteur d'humidité ne remonte plus de valeurs depuis ce matin..."></textarea>
                         </div>
 
-                        <button class="btn btn-primary w-100" @onclick="CreerTicket">
-                            Envoyer
+                        <button class="btn btn-primary w-100 btn-lg shadow-sm"
+                                disabled="@string.IsNullOrWhiteSpace(probleme)"
+                                @onclick="CreerTicket">
+                            <i class="bi bi-send-fill me-1"></i> Soumettre le ticket
                         </button>
+
+                        @if (showCreatedToast)
+                        {
+                            <div class="alert alert-success mt-3 py-2 px-3 fade-in">
+                                <i class="bi bi-check-circle-fill me-1"></i> Ticket créé.
+                            </div>
+                        }
                     </div>
                 </div>
             </div>
 
-
             <!-- LISTE DES TICKETS -->
-            <div class="col-md-7">
-
-                <div class="card shadow-sm">
-                    <div class="card-header bg-success text-white">
-                        Mes tickets
+            <div class="col-lg-7">
+                <div class="card shadow-sm border-0 tickets-card">
+                    <div class="card-header bg-transparent border-0">
+                        <div class="d-flex flex-column flex-xl-row gap-3 align-items-xl-center justify-content-between">
+                            <div class="d-flex align-items-center gap-2">
+                                <h5 class="fw-bold mb-0 d-flex align-items-center gap-2">
+                                    <i class="bi bi-card-list text-success"></i>
+                                    Mes tickets
+                                </h5>
+                            </div>
+                            <div class="filter-bar d-flex flex-wrap gap-2">
+                                <div class="input-group search-box">
+                                    <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                                    <input class="form-control"
+                                           placeholder="Rechercher..."
+                                           @bind="searchTerm"
+                                           @bind:after="Filtrer" />
+                                </div>
+                                <select class="form-select status-filter" @bind="statusFilter" @bind:after="Filtrer">
+                                    <option value="all">Tous</option>
+                                    <option value="open">En attente</option>
+                                    <option value="resolved">Résolus</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="card-body">
-
-                        @if (!tickets.Any())
+                    <div class="card-body pt-2">
+                        @if (!filteredTickets.Any())
                         {
-                            <p class="text-muted">Aucun ticket pour le moment.</p>
+                            <div class="empty-state text-center py-5">
+                                <div class="empty-icon mb-3">
+                                    <i class="bi bi-chat-dots"></i>
+                                </div>
+                                <h6 class="fw-bold mb-1">Aucun ticket ne correspond</h6>
+                                <p class="text-muted small mb-0">Ajustez votre recherche ou créez un nouveau ticket.</p>
+                            </div>
                         }
                         else
                         {
-                            <table class="table table-hover align-middle">
-                                <thead>
-                                    <tr>
-                                        <th>#</th>
-                                        <th>Problème</th>
-                                        <th>État</th>
-                                        <th>Date</th>
-                                        <th></th>
-                                    </tr>
-                                </thead>
-
-                                <tbody>
-                                    @foreach (var t in tickets)
-                                    {
+                            <div class="table-responsive">
+                                <table class="table align-middle ticket-table mb-0">
+                                    <thead>
                                         <tr>
-                                            <td>@t.IdTicket</td>
-                                            <td>@t.Probleme</td>
-
-                                            <td>
-                                                @if (t.Resolue)
-                                                {
-                                                    <span class="badge bg-success">Résolu</span>
-                                                }
-                                                else
-                                                {
-
-                                                    <span class="badge bg-warning text-dark">En attente</span>
-                                                }
-                                            </td>
-
-                                            <td>@t.DateCreation.ToString("yy-MM-dd")</td>
-
-                                            <td>
-                                                <button class="btn btn-outline-primary btn-sm"
-                                                        @onclick="() => OuvrirTicket(t.IdTicket)">
-                                                    Voir
-                                                </button>
-                                            </td>
+                                            <th class="small text-uppercase text-muted fw-semibold">#</th>
+                                            <th class="small text-uppercase text-muted fw-semibold">Problème</th>
+                                            <th class="small text-uppercase text-muted fw-semibold">État</th>
+                                            <th class="small text-uppercase text-muted fw-semibold">Date</th>
+                                            <th></th>
                                         </tr>
-                                    }
-                                </tbody>
-
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var t in filteredTickets)
+                                        {
+                                            <tr class="ticket-row">
+                                                <td class="text-muted">@t.IdTicket</td>
+                                                <td>
+                                                    <div class="problem-text">
+                                                        @t.Probleme
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    @if (t.Resolue)
+                                                    {
+                                                        <span class="status-badge resolved">
+                                                            <i class="bi bi-check2-circle me-1"></i> Résolu
+                                                        </span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="status-badge pending">
+                                                            <i class="bi bi-hourglass-split me-1"></i> En attente
+                                                        </span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    <span class="date-chip">
+                                                        @t.DateCreation.ToString("dd/MM/yy")
+                                                    </span>
+                                                </td>
+                                                <td class="text-end">
+                                                    <button class="btn btn-sm btn-outline-primary rounded-pill"
+                                                            @onclick="() => OuvrirTicket(t.IdTicket)">
+                                                        <i class="bi bi-eye"></i> Ouvrir
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
                         }
+                    </div>
 
+                    <div class="card-footer bg-transparent border-0 small text-muted d-flex justify-content-between">
+                        <span>Affichage: @filteredTickets.Count / @tickets.Count</span>
+                        <span>Dernière mise à jour: @lastReload.ToString("HH:mm:ss")</span>
                     </div>
                 </div>
-
             </div>
-
         </div>
 
     </div>
@@ -132,52 +198,184 @@ else
 
 @code {
     private List<VTicketsAvecUser>? tickets;
+    private List<VTicketsAvecUser> filteredTickets = new();
     private string probleme = "";
     private int idUtilisateur;
+    private string searchTerm = "";
+    private string statusFilter = "all";
+    private bool showCreatedToast;
+    private DateTime lastReload = DateTime.Now;
 
     protected override async Task OnInitializedAsync()
     {
-        // Récupération sûre de l'état d'authentification
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState?.User;
-
-        // Récupérer la claim NameIdentifier de manière sûre
         var idClaimValue = user?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-        // Tenter de parser en int
         if (!int.TryParse(idClaimValue, out idUtilisateur))
         {
-            // Si échec, rediriger vers la page de connexion (ou gérer autrement)
             Navigation.NavigateTo("/login");
             return;
         }
 
-        await Task.Delay(300);
         tickets = await Service.GetTicketUser(idUtilisateur);
+        filteredTickets = tickets.ToList();
     }
 
     private async Task CreerTicket()
     {
-        if (string.IsNullOrWhiteSpace(probleme))
-            return;
-
-        if (idUtilisateur <= 0)
+        if (string.IsNullOrWhiteSpace(probleme) || idUtilisateur <= 0)
         {
-            // sécurité : s'assurer que l'utilisateur est connu
-            Navigation.NavigateTo("/login");
+            if (idUtilisateur <= 0) Navigation.NavigateTo("/login");
             return;
         }
 
         await Service.CreerTicket(idUtilisateur, probleme);
         probleme = "";
+        showCreatedToast = true;
+        await Task.Delay(1800);
+        showCreatedToast = false;
 
         tickets = await Service.GetTicketUser(idUtilisateur);
+        lastReload = DateTime.Now;
+        Filtrer();
     }
 
-    private void OuvrirTicket(int id)
+    private void Filtrer()
     {
-        // navigation vers une route qui contient l'id, plus besoin de LocalState
-        Navigation.NavigateTo($"/ticket/{id}");
+        if (tickets == null)
+        {
+            filteredTickets = new List<VTicketsAvecUser>();
+            return;
+        }
+
+        IEnumerable<VTicketsAvecUser> query = tickets;
+
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            var s = searchTerm.Trim().ToLowerInvariant();
+            query = query.Where(t => t.Probleme?.ToLowerInvariant().Contains(s) == true);
+        }
+
+        query = statusFilter switch
+        {
+            "open" => query.Where(t => !t.Resolue),
+            "resolved" => query.Where(t => t.Resolue),
+            _ => query
+        };
+
+        filteredTickets = query
+            .OrderByDescending(t => t.DateCreation)
+            .ThenBy(t => t.Resolue)
+            .ToList();
+        StateHasChanged();
     }
 
+    private void OuvrirTicket(int id) =>
+        Navigation.NavigateTo($"/ticket/{id}");
 }
+
+<style>
+    .support-wrapper { animation: fadeIn .4s ease; }
+    .support-title-icon {
+        width:48px;height:48px;border-radius:14px;
+        display:flex;align-items:center;justify-content:center;
+        background:linear-gradient(135deg,#4e7cf8,#7b5dfb);color:#fff;
+        box-shadow:0 4px 12px rgba(0,0,0,.15);
+    }
+
+    .stat-chip {
+        min-width:130px;
+        padding:.65rem 1rem;
+        border-radius:14px;
+        color:#fff;
+        position:relative;
+        overflow:hidden;
+        display:flex;
+        flex-direction:column;
+        line-height:1.2;
+    }
+    .stat-chip .stat-label { font-size:.70rem; text-transform:uppercase; opacity:.85; letter-spacing:.5px; }
+    .stat-chip .stat-value { font-size:1.3rem; font-weight:600; }
+
+    .bg-gradient-primary { background:linear-gradient(135deg,#3d6df5,#6c8dff); }
+    .bg-gradient-success { background:linear-gradient(135deg,#28a745,#5ecb7a); }
+    .bg-gradient-warning { background:linear-gradient(135deg,#ffc107,#ff9f43); }
+
+    .new-ticket-card, .tickets-card {
+        border-radius:20px;
+    }
+    .ticket-textarea {
+        resize:vertical;
+        border-radius:12px;
+    }
+
+    .filter-bar .search-box { width:230px; }
+    .filter-bar .status-filter { width:150px; border-radius:10px; }
+
+    .ticket-table thead th { border:0; background:#f8f9fc; }
+    .ticket-table tbody tr { transition:.15s; }
+    .ticket-table tbody tr:hover { background:#f5f9ff; }
+
+    .problem-text { max-width:340px; font-size:.9rem; }
+    .status-badge {
+        display:inline-flex;
+        align-items:center;
+        gap:.35rem;
+        padding:.35rem .7rem;
+        font-size:.7rem;
+        font-weight:600;
+        letter-spacing:.5px;
+        border-radius:30px;
+        text-transform:uppercase;
+    }
+    .status-badge.resolved { background:#e7f9ed; color:#1d8236; border:1px solid #b5e8c3; }
+    .status-badge.pending { background:#fff7e1; color:#946300; border:1px solid #f3d595; }
+    .date-chip {
+        background:#eef2f9;
+        color:#4d5c74;
+        padding:.3rem .6rem;
+        border-radius:8px;
+        font-size:.7rem;
+        font-weight:500;
+    }
+
+    .empty-state .empty-icon {
+        width:70px;height:70px;border-radius:16px;
+        background:linear-gradient(135deg,#dae3ff,#f1f5ff);
+        display:flex;align-items:center;justify-content:center;
+        font-size:2rem;color:#4e7cf8;
+        margin:0 auto;
+    }
+
+    .skeleton-card {
+        height:120px;
+        background:linear-gradient(90deg,#ececec 25%,#f5f5f5 40%,#ececec 60%);
+        background-size:200% 100%;
+        animation: shimmer 1.2s infinite;
+        border-radius:16px;
+    }
+    .skeleton-table {
+        height:260px;
+        background:linear-gradient(90deg,#ececec 25%,#f5f5f5 40%,#ececec 60%);
+        background-size:200% 100%;
+        animation: shimmer 1.2s infinite;
+        border-radius:18px;
+    }
+
+    .fade-in { animation: fadeIn .4s ease; }
+
+    @@keyframes fadeIn {
+        from { opacity:0; transform:translateY(10px); }
+        to { opacity:1; transform:translateY(0); }
+    }
+    @@keyframes shimmer {
+        from { background-position:0 0; }
+        to { background-position: -200% 0; }
+    }
+
+    @@media (max-width: 991px) {
+        .filter-bar .search-box { width:100%; }
+        .filter-bar .status-filter { width:100%; }
+    }
+</style>

@@ -1,15 +1,281 @@
-﻿
+﻿<div class="landing-page">
+    <!-- HERO -->
+    <section class="hero-section position-relative overflow-hidden">
+        <div class="hero-bg"></div>
+        <div class="container">
+            <div class="row align-items-center min-vh-75">
+                <div class="col-lg-6 text-white hero-content">
+                    <div class="badge bg-primary bg-opacity-25 text-primary mb-3 px-3 py-2 shadow-sm">
+                        <i class="bi bi-lightning-fill"></i> Technologie de pointe
+                    </div>
 
-<div class="container-fluid ">
-    <div class="bg-danger">
-        <img src="https://images.unsplash.com/photo-1561470508-fd4df1ed90b2?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1176" alt="Alternate Text"
-             class="img-fluid" />
-    </div>
-    <div class="d-flex flex-column align-items-center">
+                    <h1 class="display-3 fw-bold mb-4 animate-fade-in">
+                        Station Météo<br />
+                        <span class="text-primary">Intelligente</span>
+                    </h1>
 
-        <h1>Hello, world!</h1>
+                    <p class="lead mb-5 text-white-50">
+                        Surveillez la météo en temps réel grâce à nos capteurs connectés haute précision.
+                        Analysez, exportez et partagez vos données facilement.
+                    </p>
 
-        <h5>Welcome to your new app.</h5>
-    </div>
+                    <div class="d-flex gap-3 flex-wrap">
+                        <a href="/login" class="btn btn-primary btn-lg px-5 shadow">
+                            <i class="bi bi-box-arrow-in-right"></i> Se connecter
+                        </a>
+                        <a href="/register" class="btn btn-outline-light btn-lg px-5">
+                            <i class="bi bi-person-plus"></i> Créer un compte
+                        </a>
+                    </div>
 
+                    <div class="row mt-5 g-4">
+                        <div class="col-4">
+                            <div class="stat-card">
+                                <h3 class="fw-bold mb-0">98%</h3>
+                                <small class="text-white-50">Précision</small>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="stat-card">
+                                <h3 class="fw-bold mb-0">24/7</h3>
+                                <small class="text-white-50">Surveillance</small>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="stat-card">
+                                <h3 class="fw-bold mb-0">500+</h3>
+                                <small class="text-white-50">Utilisateurs</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6 d-none d-lg-block">
+                    <div class="hero-image">
+                        <img src="https://images.unsplash.com/photo-1561470508-fd4df1ed90b2?auto=format&fit=crop&q=80&w=800"
+                             alt="Dashboard Météo"
+                             class="img-fluid rounded-4 shadow-lg" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="wave-divider">
+            <svg viewBox="0 0 1200 120" preserveAspectRatio="none">
+                <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z"
+                      fill="#ffffff"></path>
+            </svg>
+        </div>
+    </section>
+
+    <!-- FONCTIONNALITÉS -->
+    <section class="features-section py-5">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="display-5 fw-bold mb-3">Fonctionnalités principales</h2>
+                <p class="lead text-muted">Des outils puissants pour surveiller votre environnement</p>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-md-6 col-lg-3">
+                    <div class="feature-card h-100">
+                        <div class="feature-icon bg-danger bg-opacity-10">
+                            <i class="bi bi-thermometer-half text-danger"></i>
+                        </div>
+                        <h5 class="fw-bold mt-3">Température</h5>
+                        <p class="text-muted mb-0">
+                            Mesure précise avec historique et alertes personnalisées.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="col-md-6 col-lg-3">
+                    <div class="feature-card h-100">
+                        <div class="feature-icon bg-primary bg-opacity-10">
+                            <i class="bi bi-wind text-primary"></i>
+                        </div>
+                        <h5 class="fw-bold mt-3">Vent</h5>
+                        <p class="text-muted mb-0">
+                            Vitesse et direction via radar interactif.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="col-md-6 col-lg-3">
+                    <div class="feature-card h-100">
+                        <div class="feature-icon bg-info bg-opacity-10">
+                            <i class="bi bi-droplet-half text-info"></i>
+                        </div>
+                        <h5 class="fw-bold mt-3">Humidité</h5>
+                        <p class="text-muted mb-0">
+                            Surveillance continue de l’humidité.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="col-md-6 col-lg-3">
+                    <div class="feature-card h-100">
+                        <div class="feature-icon bg-secondary bg-opacity-10">
+                            <i class="bi bi-cloud-rain text-secondary"></i>
+                        </div>
+                        <h5 class="fw-bold mt-3">Précipitations</h5>
+                        <p class="text-muted mb-0">
+                            Détection et suivi des pluies.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- AVANTAGES -->
+    <section class="benefits-section bg-light py-5">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6 mb-4 mb-lg-0">
+                    <div class="position-relative">
+                        <div class="image-decoration"></div>
+                        <img src="https://images.unsplash.com/photo-1504868584819-f8e8b4b6d7e3?auto=format&fit=crop&q=80&w=600"
+                             alt="Dashboard"
+                             class="img-fluid rounded-4 shadow" />
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <h2 class="display-6 fw-bold mb-4">Pourquoi nous choisir ?</h2>
+                    <p class="lead text-muted mb-4">
+                        Une solution professionnelle complète, fiable et évolutive.
+                    </p>
+
+                    <ul class="list-unstyled">
+                        <li class="mb-3 d-flex align-items-start">
+                            <div class="benefit-icon bg-success bg-opacity-10 me-3">
+                                <i class="bi bi-check-circle-fill text-success"></i>
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-1">Interface intuitive</h6>
+                                <p class="text-muted mb-0">Rapide à prendre en main.</p>
+                            </div>
+                        </li>
+                        <li class="mb-3 d-flex align-items-start">
+                            <div class="benefit-icon bg-success bg-opacity-10 me-3">
+                                <i class="bi bi-check-circle-fill text-success"></i>
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-1">Données précises</h6>
+                                <p class="text-muted mb-0">Capteurs vérifiés et calibrés.</p>
+                            </div>
+                        </li>
+                        <li class="mb-3 d-flex align-items-start">
+                            <div class="benefit-icon bg-success bg-opacity-10 me-3">
+                                <i class="bi bi-check-circle-fill text-success"></i>
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-1">Export PDF</h6>
+                                <p class="text-muted mb-0">Rapports générés en un clic.</p>
+                            </div>
+                        </li>
+                        <li class="mb-3 d-flex align-items-start">
+                            <div class="benefit-icon bg-success bg-opacity-10 me-3">
+                                <i class="bi bi-check-circle-fill text-success"></i>
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-1">Support 24/7</h6>
+                                <p class="text-muted mb-0">Accompagnement dédié.</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta-section py-5">
+        <div class="container text-center">
+            <div class="cta-content mx-auto">
+                <h2 class="display-5 fw-bold mb-4">Prêt à démarrer ?</h2>
+                <p class="lead text-muted mb-5">
+                    Créez votre compte gratuitement et accédez à toutes les fonctionnalités.
+                </p>
+                <a href="/register" class="btn btn-primary btn-lg px-5 shadow">
+                    <i class="bi bi-rocket-takeoff"></i> Commencer gratuitement
+                </a>
+                <p class="text-muted mt-3 mb-0">
+                    <small>Aucune carte bancaire requise • Configuration rapide</small>
+                </p>
+            </div>
+        </div>
+    </section>
 </div>
+
+<style>
+    .landing-page { overflow-x: hidden; }
+
+    .hero-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        position: relative;
+        padding: 80px 0;
+    }
+    .hero-bg {
+        position: absolute;
+        inset: 0;
+        background-image: url('https://images.unsplash.com/photo-1561470508-fd4df1ed90b2?auto=format&fit=crop&q=80&w=1200');
+        background-size: cover;
+        background-position: center;
+        opacity: 0.1;
+    }
+    .hero-content { position: relative; z-index: 2; }
+    .min-vh-75 { min-height: 75vh; }
+
+    .stat-card { text-align: center; }
+
+    .wave-divider { position: absolute; bottom: 0; left: 0; width: 100%; line-height: 0; }
+    .wave-divider svg { display: block; width: 100%; height: 60px; }
+
+    .feature-card {
+        background: var(--card-bg, #fff);
+        padding: 2rem;
+        border-radius: 1rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+        transition: all .3s ease;
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+    .feature-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 12px 24px rgba(0,0,0,0.15);
+    }
+    .feature-icon {
+        width: 64px; height: 64px; border-radius: 16px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 2rem;
+    }
+    .benefit-icon {
+        width: 40px; height: 40px; border-radius: 10px;
+        display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .image-decoration {
+        position: absolute; width: 100%; height: 100%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 1rem; top: -20px; left: -20px; z-index: -1;
+    }
+    .cta-content { max-width: 700px; }
+    .animate-fade-in { animation: fadeIn 1s ease-in; }
+    @@keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @@media (max-width: 768px) {
+        .hero-section { padding: 40px 0; }
+        .display-3 { font-size: 2.3rem; }
+    }
+
+    /* Mode sombre */
+    body.dark-mode .hero-section { background: linear-gradient(135deg,#2c3e50 0%,#4b486e 100%); }
+    body.dark-mode .feature-card { background:#2d2d2d; color:#e4e4e4; }
+    body.dark-mode .feature-card p { color:#b0b0b0; }
+    body.dark-mode .benefits-section { background:#1f1f1f !important; }
+    body.dark-mode .cta-section { background:#222; }
+</style>
+

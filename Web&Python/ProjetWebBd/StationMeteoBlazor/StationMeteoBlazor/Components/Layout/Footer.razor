@@ -1,68 +1,99 @@
-﻿<footer class="text-center bg-body-tertiary">
-    <!-- Grid container -->
+﻿@using Microsoft.AspNetCore.Components.Authorization
+
+<footer class="text-center bg-body-tertiary mt-5">
     <div class="container pt-4">
-        <!-- Section: Social media -->
-        <section class="mb-4">
-            <!-- Facebook -->
-            <a data-mdb-ripple-init
-               class="btn btn-link btn-floating btn-lg text-body m-1"
-               href="#!"
-               role="button"
-               data-mdb-ripple-color="dark">
-                <i class="fab fa-facebook-f"></i>
-            </a>
+        <AuthorizeView>
+            <Authorized Context="footerAuth">
+                <!-- Footer pour utilisateurs connectés -->
+                <section class="mb-4">
+                    <div class="row text-start">
+                        <div class="col-md-4 mb-3">
+                            <h6 class="text-uppercase fw-bold">Navigation</h6>
+                            <hr class="mb-3 mt-0 d-inline-block mx-0" style="width: 60px; background-color: #7c4dff; height: 2px" />
+                            <ul class="list-unstyled">
+                                <AuthorizeView Roles="User">
+                                    <Authorized>
+                                        <li><a href="/capteurs" class="text-dark text-decoration-none">📊 Dashboard</a></li>
+                                        <li><a href="/support" class="text-dark text-decoration-none">🎫 Support</a></li>
+                                    </Authorized>
+                                </AuthorizeView>
+                                <AuthorizeView Roles="Admin">
+                                    <Authorized>
+                                        <li><a href="/admin-dashboard" class="text-dark text-decoration-none">🏠 Dashboard Admin</a></li>
+                                        <li><a href="/support-admin" class="text-dark text-decoration-none">🎫 Gestion Tickets</a></li>
+                                    </Authorized>
+                                </AuthorizeView>
+                            </ul>
+                        </div>
 
-            <!-- Twitter -->
-            <a data-mdb-ripple-init
-               class="btn btn-link btn-floating btn-lg text-body m-1"
-               href="#!"
-               role="button"
-               data-mdb-ripple-color="dark">
-                <i class="fab fa-twitter"></i>
-            </a>
+                        <div class="col-md-4 mb-3">
+                            <h6 class="text-uppercase fw-bold">Ressources</h6>
+                            <hr class="mb-3 mt-0 d-inline-block mx-0" style="width: 60px; background-color: #7c4dff; height: 2px" />
+                            <ul class="list-unstyled">
+                                <li><a href="#!" class="text-dark text-decoration-none">Documentation</a></li>
+                                <li><a href="#!" class="text-dark text-decoration-none">API</a></li>
+                                <li><a href="#!" class="text-dark text-decoration-none">FAQ</a></li>
+                            </ul>
+                        </div>
 
-            <!-- Google -->
-            <a data-mdb-ripple-init
-               class="btn btn-link btn-floating btn-lg text-body m-1"
-               href="#!"
-               role="button"
-               data-mdb-ripple-color="dark">
-                <i class="fab fa-google"></i>
-            </a>
+                        <div class="col-md-4 mb-3">
+                            <h6 class="text-uppercase fw-bold">Mon Compte</h6>
+                            <hr class="mb-3 mt-0 d-inline-block mx-0" style="width: 60px; background-color: #7c4dff; height: 2px" />
+                            <p class="text-muted mb-0">
+                                <i class="bi bi-person-circle"></i> @footerAuth.User.Identity?.Name
+                            </p>
+                            <p class="text-muted small">
+                                @if (footerAuth.User.IsInRole("Admin"))
+                                {
+                                    <span class="badge bg-danger">Administrateur</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-primary">Utilisateur</span>
+                                }
+                            </p>
+                        </div>
+                    </div>
+                </section>
+            </Authorized>
 
-            <!-- Instagram -->
-            <a data-mdb-ripple-init
-               class="btn btn-link btn-floating btn-lg text-body m-1"
-               href="#!"
-               role="button"
-               data-mdb-ripple-color="dark">
-                <i class="fab fa-instagram"></i>
-            </a>
-
-            <!-- Linkedin -->
-            <a data-mdb-ripple-init
-               class="btn btn-link btn-floating btn-lg text-body m-1"
-               href="#!"
-               role="button"
-               data-mdb-ripple-color="dark">
-                <i class="fab fa-linkedin"></i>
-            </a>
-            <!-- Github -->
-            <a data-mdb-ripple-init
-               class="btn btn-link btn-floating btn-lg text-body m-1"
-               href="#!"
-               role="button"
-               data-mdb-ripple-color="dark">
-                <i class="fab fa-github"></i>
-            </a>
-        </section>
-        <!-- Section: Social media -->
+            <NotAuthorized>
+                <!-- Footer pour visiteurs -->
+                <section class="mb-4">
+                    <p class="mb-3">
+                        <strong>Rejoignez notre communauté de passionnés de météorologie</strong>
+                    </p>
+                    
+                    <!-- Réseaux sociaux -->
+                    <a data-mdb-ripple-init class="btn btn-outline-dark btn-floating m-1" href="#!" role="button">
+                        <i class="fab fa-facebook-f"></i>
+                    </a>
+                    <a data-mdb-ripple-init class="btn btn-outline-dark btn-floating m-1" href="#!" role="button">
+                        <i class="fab fa-twitter"></i>
+                    </a>
+                    <a data-mdb-ripple-init class="btn btn-outline-dark btn-floating m-1" href="#!" role="button">
+                        <i class="fab fa-google"></i>
+                    </a>
+                    <a data-mdb-ripple-init class="btn btn-outline-dark btn-floating m-1" href="#!" role="button">
+                        <i class="fab fa-instagram"></i>
+                    </a>
+                    <a data-mdb-ripple-init class="btn btn-outline-dark btn-floating m-1" href="#!" role="button">
+                        <i class="fab fa-linkedin"></i>
+                    </a>
+                    <a data-mdb-ripple-init class="btn btn-outline-dark btn-floating m-1" href="#!" role="button">
+                        <i class="fab fa-github"></i>
+                    </a>
+                </section>
+            </NotAuthorized>
+        </AuthorizeView>
     </div>
-    <!-- Grid container -->
+
     <!-- Copyright -->
     <div class="text-center p-3" style="background-color: rgba(0, 0, 0, 0.05);">
-        © 2020 Copyright:
-        <a class="text-body" href="https://mdbootstrap.com/">MDBootstrap.com</a>
+        © @DateTime.Now.Year Station Météo - Tous droits réservés
+        <span class="mx-2">|</span>
+        <a class="text-dark text-decoration-none" href="#!">Conditions d'utilisation</a>
+        <span class="mx-2">|</span>
+        <a class="text-dark text-decoration-none" href="#!">Confidentialité</a>
     </div>
-    <!-- Copyright -->
 </footer>

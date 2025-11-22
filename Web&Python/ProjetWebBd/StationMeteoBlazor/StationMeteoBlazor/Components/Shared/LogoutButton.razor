@@ -1,0 +1,28 @@
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+<button class="@CssClass" @onclick="HandleLogout">
+    <i class="bi bi-box-arrow-right"></i> Déconnexion
+</button>
+
+@code {
+    [Parameter] public string CssClass { get; set; } = "btn btn-sm btn-outline-danger";
+    [Parameter] public bool Confirm { get; set; } = true;
+    [Parameter] public string RedirectUrl { get; set; } = "/login";
+
+    private async Task HandleLogout()
+    {
+        if (Confirm)
+        {
+            var ok = await JS.InvokeAsync<bool>("confirm", "Voulez-vous vous déconnecter ?");
+            if (!ok) return;
+        }
+
+        if (AuthStateProvider is StationMeteoBlazor.Authentification.CustomAuthenticationStateProvider custom)
+        {
+            await custom.LogoutAsync();
+        }
+        Navigation.NavigateTo(RedirectUrl, true);
+    }
+}

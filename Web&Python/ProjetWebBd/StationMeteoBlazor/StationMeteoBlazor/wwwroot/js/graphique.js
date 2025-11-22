@@ -1,5 +1,5 @@
 ﻿//---------------------------------------------------------------------
-// MODE SOMBRE / CLAIR
+// MODE SOMBRE / CLAIR - VERSION AMÉLIORÉE
 //---------------------------------------------------------------------
 window.toggleDarkMode = () => {
     const body = document.body;
@@ -7,6 +7,16 @@ window.toggleDarkMode = () => {
 
     const mode = body.classList.contains("dark-mode") ? "dark" : "light";
     localStorage.setItem("theme", mode);
+
+    // Mettre à jour l'icône du bouton
+    updateDarkModeIcon();
+    
+    // Redessiner les graphiques si présents
+    if (typeof Chart !== 'undefined') {
+        Chart.helpers.each(Chart.instances, function(instance) {
+            instance.destroy();
+        });
+    }
 };
 
 window.initTheme = () => {
@@ -14,16 +24,27 @@ window.initTheme = () => {
     if (saved === "dark") {
         document.body.classList.add("dark-mode");
     }
+    updateDarkModeIcon();
 };
 
+function updateDarkModeIcon() {
+    const isDark = document.body.classList.contains("dark-mode");
+    const icons = document.querySelectorAll('.dark-mode-icon');
+    icons.forEach(icon => {
+        icon.className = isDark ? 'bi bi-sun-fill dark-mode-icon' : 'bi bi-moon-stars dark-mode-icon';
+    });
+}
 
 //---------------------------------------------------------------------
 // GRAPH SIMPLE (line)
 //---------------------------------------------------------------------
 window.creerGraphique = (canvasId, labels, valeurs, label) => {
     const ctx = document.getElementById(canvasId);
-
     if (!ctx) return;
+
+    const isDark = document.body.classList.contains("dark-mode");
+    const textColor = isDark ? '#e4e4e4' : '#666';
+    const gridColor = isDark ? '#404040' : '#e0e0e0';
 
     new Chart(ctx, {
         type: 'line',
@@ -33,28 +54,51 @@ window.creerGraphique = (canvasId, labels, valeurs, label) => {
                 label: label,
                 data: valeurs,
                 borderWidth: 2,
-                borderColor: getComputedStyle(document.body).getPropertyValue("--chart-primary"),
-                backgroundColor: getComputedStyle(document.body).getPropertyValue("--chart-primary-bg"),
-                tension: 0.3,
-                pointRadius: 3
+                borderColor: getComputedStyle(document.body).getPropertyValue("--chart-primary") || 'rgb(27, 110, 194)',
+                backgroundColor: getComputedStyle(document.body).getPropertyValue("--chart-primary-bg") || 'rgba(27, 110, 194, 0.1)',
+                tension: 0.4,
+                pointRadius: 3,
+                pointHoverRadius: 6
             }]
         },
         options: {
             responsive: true,
+            maintainAspectRatio: true,
             animation: {
                 duration: 800,
                 easing: "easeOutQuint"
+            },
+            plugins: {
+                legend: {
+                    labels: {
+                        color: textColor
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: { color: textColor },
+                    grid: { color: gridColor }
+                },
+                y: {
+                    ticks: { color: textColor },
+                    grid: { color: gridColor }
+                }
             }
         }
     });
 };
-
 
 //---------------------------------------------------------------------
 // GRAPH COMBINÉ TEMP + HUM
 //---------------------------------------------------------------------
 window.creerGraphiqueCombine = (canvasId, labels, temp, hum) => {
     const ctx = document.getElementById(canvasId);
+    if (!ctx) return;
+
+    const isDark = document.body.classList.contains("dark-mode");
+    const textColor = isDark ? '#e4e4e4' : '#666';
+    const gridColor = isDark ? '#404040' : '#e0e0e0';
 
     new Chart(ctx, {
         data: {
@@ -66,7 +110,7 @@ window.creerGraphiqueCombine = (canvasId, labels, temp, hum) => {
                     data: temp,
                     borderColor: "rgb(255, 80, 80)",
                     backgroundColor: "rgba(255, 80, 80, 0.25)",
-                    tension: 0.3,
+                    tension: 0.4,
                     borderWidth: 2
                 },
                 {
@@ -75,7 +119,7 @@ window.creerGraphiqueCombine = (canvasId, labels, temp, hum) => {
                     data: hum,
                     borderColor: "rgb(80, 80, 255)",
                     backgroundColor: "rgba(80, 80, 255, 0.25)",
-                    tension: 0.3,
+                    tension: 0.4,
                     borderWidth: 2
                 }
             ]
@@ -85,17 +129,38 @@ window.creerGraphiqueCombine = (canvasId, labels, temp, hum) => {
             animation: {
                 duration: 900,
                 easing: "easeOutCubic"
+            },
+            plugins: {
+                legend: {
+                    labels: {
+                        color: textColor
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: { color: textColor },
+                    grid: { color: gridColor }
+                },
+                y: {
+                    ticks: { color: textColor },
+                    grid: { color: gridColor }
+                }
             }
         }
     });
 };
-
 
 //---------------------------------------------------------------------
 // GRAPH RADAR (VENT DIRECTION)
 //---------------------------------------------------------------------
 window.creerGraphiqueRadar = (canvasId, labels, valeurs) => {
     const ctx = document.getElementById(canvasId);
+    if (!ctx) return;
+
+    const isDark = document.body.classList.contains("dark-mode");
+    const textColor = isDark ? '#e4e4e4' : '#666';
+    const gridColor = isDark ? '#404040' : '#e0e0e0';
 
     new Chart(ctx, {
         type: 'radar',
@@ -114,26 +179,36 @@ window.creerGraphiqueRadar = (canvasId, labels, valeurs) => {
             animation: {
                 duration: 1000,
                 easing: "easeOutCubic"
+            },
+            plugins: {
+                legend: {
+                    labels: {
+                        color: textColor
+                    }
+                }
+            },
+            scales: {
+                r: {
+                    ticks: { color: textColor },
+                    grid: { color: gridColor },
+                    pointLabels: { color: textColor }
+                }
             }
         }
     });
 };
-
 
 //---------------------------------------------------------------------
 // EXPORT PDF
 //---------------------------------------------------------------------
 window.exportPDF = async () => {
     const { jsPDF } = window.jspdf;
-
     const pdf = new jsPDF("p", "mm", "a4");
-
     const charts = document.querySelectorAll("canvas");
     let y = 10;
 
     for (let canvas of charts) {
         const img = canvas.toDataURL("image/png");
-
         pdf.addImage(img, "PNG", 10, y, 180, 90);
         y += 95;
 
@@ -151,18 +226,15 @@ window.exportPDF = async () => {
 //---------------------------------------------------------------------
 window.renderPie = (resolus, nonRes) => {
     const canvas = document.getElementById('chartRes');
-
     if (!canvas) {
         console.error("Canvas 'chartRes' non trouvé dans le DOM.");
         return;
     }
 
-    // OBLIGATOIRE POUR CHART.JS 4
-    Chart.register(
-        Chart.ArcElement,
-        Chart.Legend,
-        Chart.Tooltip
-    );
+    const isDark = document.body.classList.contains("dark-mode");
+    const textColor = isDark ? '#e4e4e4' : '#666';
+
+    Chart.register(Chart.ArcElement, Chart.Legend, Chart.Tooltip);
 
     new Chart(canvas, {
         type: 'pie',
@@ -173,7 +245,21 @@ window.renderPie = (resolus, nonRes) => {
                 backgroundColor: ['#28a745', '#dc3545'],
                 hoverOffset: 4
             }]
+        },
+        options: {
+            plugins: {
+                legend: {
+                    labels: {
+                        color: textColor
+                    }
+                }
+            }
         }
     });
 };
+
+// Initialiser le thème au chargement
+document.addEventListener('DOMContentLoaded', () => {
+    initTheme();
+});
 
