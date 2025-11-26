@@ -1,0 +1,336 @@
+﻿@page "/support-admin"
+@using StationMeteoBlazor.Models
+@using StationMeteoBlazor.Data
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@attribute [Authorize]
+@inject SupportService Service
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+<PageTitle>Gestion des tickets</PageTitle>
+
+<AuthorizeView>
+    <Authorized Context="adminContext">
+        @if (isLoading)
+        {
+            <div class="container py-5">
+                <div class="row g-4">
+                    @for(int i=0;i<3;i++){
+                        <div class="col-md-4"><div class="skeleton-card"></div></div>
+                    }
+                </div>
+                <div class="skeleton-table mt-4"></div>
+            </div>
+        }
+        else if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger container mt-4">@errorMessage</div>
+        }
+        else
+        {
+            <div class="container py-4 support-admin-wrapper">
+
+                <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+                    <h2 class="fw-bold mb-0 d-flex align-items-center gap-2">
+                        <span class="title-icon"><i class="bi bi-tools"></i></span>
+                        Administration — Tickets
+                    </h2>
+                    <div class="d-flex flex-wrap gap-2">
+                        <div class="stat-chip gradient-primary">
+                            <div class="stat-label">Total</div>
+                            <div class="stat-value">@ticketsBrut.Count</div>
+                        </div>
+                        <div class="stat-chip gradient-success">
+                            <div class="stat-label">Résolus</div>
+                            <div class="stat-value">@ticketsBrut.Count(t=>t.Resolue)</div>
+                        </div>
+                        <div class="stat-chip gradient-warning">
+                            <div class="stat-label">En attente</div>
+                            <div class="stat-value">@ticketsBrut.Count(t=>!t.Resolue)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="filter-panel card shadow-sm border-0 mb-4">
+                    <div class="card-body d-flex flex-column flex-xl-row gap-3 align-items-xl-center justify-content-between">
+                        <div class="d-flex flex-wrap gap-2">
+                            <div class="input-group search-box">
+                                <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                                <input class="form-control" placeholder="Rechercher (nom, problème...)" @bind="searchTerm" @bind:after="ApplyFilter" />
+                            </div>
+                            <select class="form-select status-filter" @bind="CurrentFilter" @bind:after="ApplyFilter">
+                                <option value="all">Tous</option>
+                                <option value="open">Non résolus</option>
+                                <option value="closed">Résolus</option>
+                            </select>
+                        </div>
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <span class="small text-muted">Connecté : @currentUserName
+                                @if (isAdmin)
+                                {
+                                    <span class="badge bg-info text-dark ms-1">Admin</span>
+                                }
+                            </span>
+                            <button class="btn btn-outline-secondary btn-sm" @onclick="Rafraichir"><i class="bi bi-arrow-clockwise"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-0 tickets-master">
+                    <div class="card-body p-0">
+                        @if (!tickets.Any())
+                        {
+                            <div class="empty-state text-center py-5">
+                                <div class="empty-icon mb-3"><i class="bi bi-inbox"></i></div>
+                                <h6 class="fw-bold mb-1">Aucun ticket</h6>
+                                <p class="text-muted small mb-0">Tout est calme.</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="table-responsive">
+                                <table class="table align-middle ticket-table mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Utilisateur</th>
+                                            <th>Problème</th>
+                                            <th>État</th>
+                                            <th>Date</th>
+                                            <th style="width:140px;">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var t in tickets)
+                                        {
+                                            <tr class="ticket-row">
+                                                <td class="text-muted">@t.IdTicket</td>
+                                                <td>@t.Nom @t.Prenom</td>
+                                                <td class="problem-cell">@t.Probleme</td>
+                                                <td>
+                                                    @if (t.Resolue)
+                                                    {
+                                                        <span class="status-badge resolved"><i class="bi bi-check2-circle me-1"></i>Résolu</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="status-badge pending"><i class="bi bi-hourglass-split me-1"></i>En attente</span>
+                                                    }
+                                                </td>
+                                                <td><span class="date-chip">@t.DateCreation.ToString("dd/MM/yy HH:mm")</span></td>
+                                                <td>
+                                                    <div class="d-flex gap-2">
+                                                        <button class="btn btn-sm btn-outline-primary rounded-pill" @onclick="() => VoirTicket(t.IdTicket)">
+                                                            <i class="bi bi-eye"></i>
+                                                        </button>
+                                                        <AuthorizeView Roles="Admin">
+                                                            <Authorized>
+                                                                @if (!t.Resolue)
+                                                                {
+                                                                    <button class="btn btn-sm btn-success rounded-pill"
+                                                                            disabled="@resolvingIds.Contains(t.IdTicket)"
+                                                                            @onclick="() => Resoudre(t.IdTicket)">
+                                                                        @if (resolvingIds.Contains(t.IdTicket))
+                                                                        {
+                                                                            <span class="spinner-border spinner-border-sm" role="status"></span>
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <i class="bi bi-check2"></i>
+                                                                        }
+                                                                    </button>
+                                                                }
+                                                            </Authorized>
+                                                        </AuthorizeView>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    </div>
+                    <div class="card-footer bg-transparent border-0 small text-muted d-flex justify-content-between">
+                        <span>Affichage: @tickets.Count / @ticketsBrut.Count</span>
+                        <span>Mis à jour: @lastRefresh.ToString("HH:mm:ss")</span>
+                    </div>
+                </div>
+            </div>
+        }
+    </Authorized>
+
+    <NotAuthorized>
+        <div class="container mt-4">
+            <div class="alert alert-warning">
+                Vous devez être connecté pour accéder à cette page.
+                <a href="/login" class="ms-2">Se connecter</a>
+            </div>
+        </div>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    [CascadingParameter] private Task<AuthenticationState> AuthenticationStateTask { get; set; } = default!;
+    private List<VTicketsAvecUser> tickets = new();
+    private List<VTicketsAvecUser> ticketsBrut = new();
+    private bool isLoading = true;
+    private string? errorMessage;
+    private readonly HashSet<int> resolvingIds = new();
+    private string currentFilter = "all";
+    private string searchTerm = "";
+    private string currentUserName = string.Empty;
+    private bool isAdmin = false;
+    private DateTime lastRefresh = DateTime.Now;
+
+    private string CurrentFilter
+    {
+        get => currentFilter;
+        set
+        {
+            if (currentFilter == value) return;
+            currentFilter = value;
+            ApplyFilter();
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        isLoading = true;
+        try
+        {
+            var authState = await AuthenticationStateTask;
+            var user = authState.User;
+            currentUserName = user.Identity?.Name ?? "Invité";
+            isAdmin = user.IsInRole("Admin");
+            ticketsBrut = (await Service.GetAllTickets()) ?? new();
+            ApplyFilter();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Impossible de charger les tickets : " + ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void ApplyFilter()
+    {
+        IEnumerable<VTicketsAvecUser> q = ticketsBrut;
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            var s = searchTerm.Trim().ToLowerInvariant();
+            q = q.Where(t =>
+                t.Probleme?.ToLowerInvariant().Contains(s) == true ||
+                $"{t.Nom} {t.Prenom}".ToLowerInvariant().Contains(s));
+        }
+        q = currentFilter switch
+        {
+            "open" => q.Where(t => !t.Resolue),
+            "closed" => q.Where(t => t.Resolue),
+            _ => q
+        };
+        tickets = q
+            .OrderByDescending(t => t.DateCreation)
+            .ThenBy(t => t.Resolue)
+            .ToList();
+        StateHasChanged();
+    }
+
+    private void VoirTicket(int idTicket) => Navigation.NavigateTo($"/ticket/{idTicket}?from=support-admin");
+
+    private async Task Resoudre(int idTicket)
+    {
+        bool ok = await JS.InvokeAsync<bool>("confirm", $"Confirmer la résolution du ticket #{idTicket} ?");
+        if (!ok) return;
+        resolvingIds.Add(idTicket);
+        try
+        {
+            await Service.MarquerCommeResolue(idTicket);
+            var item = ticketsBrut.FirstOrDefault(t => t.IdTicket == idTicket);
+            if (item != null) item.Resolue = true;
+            ApplyFilter();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Erreur lors de la résolution : " + ex.Message;
+        }
+        finally
+        {
+            resolvingIds.Remove(idTicket);
+            StateHasChanged();
+        }
+    }
+
+    private async Task Rafraichir()
+    {
+        ticketsBrut = (await Service.GetAllTickets()) ?? new();
+        lastRefresh = DateTime.Now;
+        ApplyFilter();
+    }
+}
+
+<style>
+    .support-admin-wrapper { animation: fadeIn .4s ease; }
+    .title-icon {
+        width:50px;height:50px;border-radius:16px;
+        display:flex;align-items:center;justify-content:center;
+        background:linear-gradient(135deg,#0d6efd,#6610f2);color:#fff;
+        box-shadow:0 4px 14px rgba(0,0,0,.18);
+    }
+    .stat-chip {
+        min-width:120px;padding:.65rem .95rem;border-radius:14px;color:#fff;
+        display:flex;flex-direction:column;line-height:1.15;
+    }
+    .stat-label { font-size:.65rem;text-transform:uppercase;opacity:.8;letter-spacing:.5px; }
+    .stat-value { font-size:1.2rem;font-weight:600; }
+    .gradient-primary { background:linear-gradient(135deg,#2563eb,#6366f1); }
+    .gradient-success { background:linear-gradient(135deg,#16a34a,#4ade80); }
+    .gradient-warning { background:linear-gradient(135deg,#d97706,#fbbf24); }
+
+    .filter-panel { border-radius:20px; }
+    .search-box { width:260px; }
+    .status-filter { width:160px; border-radius:10px; }
+
+    .tickets-master { border-radius:20px; overflow:hidden; }
+    .ticket-table thead th { background:#f8f9fc; border:0; font-size:.7rem; letter-spacing:.5px; }
+    .ticket-table tbody tr { transition:.15s; }
+    .ticket-table tbody tr:hover { background:#f4f8ff; }
+    .problem-cell { max-width:320px;font-size:.85rem; }
+
+    .status-badge {
+        display:inline-flex;align-items:center;gap:.35rem;
+        padding:.35rem .7rem;font-size:.65rem;font-weight:600;
+        border-radius:30px;text-transform:uppercase;letter-spacing:.5px;
+    }
+    .status-badge.resolved { background:#e7f9ed;color:#1d8236;border:1px solid #b5e8c3; }
+    .status-badge.pending { background:#fff7e1;color:#946300;border:1px solid #f3d595; }
+    .date-chip { background:#eef2f9;color:#4d5c74;padding:.3rem .6rem;border-radius:8px;font-size:.65rem;font-weight:500; }
+
+    .empty-state .empty-icon {
+        width:72px;height:72px;border-radius:16px;
+        background:linear-gradient(135deg,#e0e7ff,#f1f5ff);
+        display:flex;align-items:center;justify-content:center;
+        font-size:2rem;color:#2563eb;
+        margin:0 auto;
+    }
+
+    .skeleton-card { height:110px;border-radius:16px;
+        background:linear-gradient(90deg,#ececec 25%,#f5f5f5 40%,#ececec 60%);
+        background-size:200% 100%;animation: shimmer 1.2s infinite;
+    }
+    .skeleton-table { height:260px;border-radius:20px;
+        background:linear-gradient(90deg,#ececec 25%,#f5f5f5 40%,#ececec 60%);
+        background-size:200% 100%;animation: shimmer 1.2s infinite;
+    }
+
+    @@keyframes fadeIn { from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
+    @@keyframes shimmer { from{background-position:0 0;} to{background-position:-200% 0;} }
+
+    @@media (max-width: 991px){
+        .search-box,.status-filter{width:100%;}
+    }
+</style>

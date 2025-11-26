@@ -40,7 +40,10 @@ public partial class Prog3a25MaStationContext : DbContext
 
     public virtual DbSet<VTicketsAvecUser> VTicketsAvecUsers { get; set; }
 
- 
+    //    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    //#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+    //        => optionsBuilder.UseSqlServer("Data Source=dicjwin01.cegepjonquiere.ca;Initial Catalog=Prog3a25MaStation;MultipleActiveResultSets=true;User Id=Prog3e07;Password=fenetre98");
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Alerte>(entity =>
@@ -74,10 +77,6 @@ public partial class Prog3a25MaStationContext : DbContext
             entity.ToTable("DonneeCapteur", tb => tb.HasTrigger("verifeCapteurDonneeAlerte"));
 
             entity.Property(e => e.DateMesure).HasDefaultValueSql("(sysdatetime())");
-            entity.Property(e => e.Lumiere).HasDefaultValueSql("((0.0))");
-            entity.Property(e => e.Pluie).HasDefaultValueSql("((0.0))");
-            entity.Property(e => e.VentDirection).HasDefaultValueSql("((0.0))");
-            entity.Property(e => e.VentVitesse).HasDefaultValueSql("((0.0))");
 
             entity.HasOne(d => d.IdUtilisateurNavigation).WithMany(p => p.DonneeCapteurs).HasConstraintName("FK_Donnee_User");
         });

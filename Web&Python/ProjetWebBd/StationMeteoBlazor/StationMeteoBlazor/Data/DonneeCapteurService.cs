@@ -1,5 +1,5 @@
 ﻿using StationMeteoBlazor.Models; //Donne accès à la classe DonneeCapteur
-using Microsoft.EntityFrameworkCore; 
+using Microsoft.EntityFrameworkCore;
 
 namespace StationMeteoBlazor.Data
 {
@@ -12,12 +12,12 @@ namespace StationMeteoBlazor.Data
             _factory = factory;
         }
 
-        public async Task<List<DonneeCapteur>> GetAllAsync()
+        public async Task<List<DonneeCapteur>> GetAllAsync(int id)
         {
-                var context = _factory.CreateDbContext();
-                var capteurs = context.DonneeCapteurs.Select(context => context).ToListAsync();
+            var context = _factory.CreateDbContext();
+            var capteurs = context.DonneeCapteurs.Where(context => context.IdUtilisateur == id).OrderByDescending(c => c.DateMesure).ToListAsync();
 
-          return await capteurs;
+            return await capteurs;
         }
     }
 }

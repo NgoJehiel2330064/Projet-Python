@@ -1,36 +1,122 @@
-﻿<main>
-    <div class="row">
-        <div class="col-sm-3 ">
-            <div class="card bg-danger">
-                <div class="card-body">
-                    <h5 class="card-title">Temperature</h5>
-                    <p class="card-text">With supporting text below as a natural lead-in to additional content.</p>
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@inject NavigationManager Navigation
+
+<main>
+    <div class="container my-5">
+        <AuthorizeView>
+            <Authorized Context="dashContext">
+                <div class="text-center mb-5">
+                    <h1 class="display-4 fw-bold">Bienvenue, @dashContext.User.Identity?.Name ! 👋</h1>
+                    <p class="lead text-muted">Votre tableau de bord météo personnel</p>
                 </div>
-            </div>
-        </div>
-        <div class="col-sm-3">
-            <div class="card bg-danger">
-                <div class="card-body">
-                    <h5 class="card-title">Vent</h5>
-                    <p class="card-text">With supporting text below as a natural lead-in to additional content.</p>
+
+                <!-- Cartes de statistiques rapides -->
+                <div class="row g-4 mb-5">
+                    <div class="col-sm-6 col-md-3">
+                        <div class="card bg-danger text-white shadow-sm h-100">
+                            <div class="card-body text-center">
+                                <i class="bi bi-thermometer-half display-4 mb-3"></i>
+                                <h5 class="card-title">Température</h5>
+                                <p class="card-text fs-3 fw-bold">-- °C</p>
+                                <small>Dernière mesure</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-6 col-md-3">
+                        <div class="card bg-primary text-white shadow-sm h-100">
+                            <div class="card-body text-center">
+                                <i class="bi bi-wind display-4 mb-3"></i>
+                                <h5 class="card-title">Vent</h5>
+                                <p class="card-text fs-3 fw-bold">-- m/s</p>
+                                <small>Vitesse actuelle</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-6 col-md-3">
+                        <div class="card bg-info text-white shadow-sm h-100">
+                            <div class="card-body text-center">
+                                <i class="bi bi-droplet-half display-4 mb-3"></i>
+                                <h5 class="card-title">Humidité</h5>
+                                <p class="card-text fs-3 fw-bold">-- %</p>
+                                <small>Taux actuel</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-6 col-md-3">
+                        <div class="card bg-secondary text-white shadow-sm h-100">
+                            <div class="card-body text-center">
+                                <i class="bi bi-cloud-rain display-4 mb-3"></i>
+                                <h5 class="card-title">Pluie</h5>
+                                <p class="card-text fs-3 fw-bold">-- mm</p>
+                                <small>Précipitations</small>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </div>
-        <div class="col-sm-3">
-            <div class="card bg-danger">
-                <div class="card-body">
-                    <h5 class="card-title">humidité</h5>
-                    <p class="card-text">With supporting text below as a natural lead-in to additional content.</p>
+
+                <!-- Accès rapide -->
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="card shadow-sm h-100">
+                            <div class="card-body">
+                                <h5 class="card-title fw-bold mb-3">
+                                    <i class="bi bi-graph-up text-primary"></i> Accès rapide
+                                </h5>
+                                <div class="d-grid gap-2">
+                                    <AuthorizeView Roles="User">
+                                        <Authorized>
+                                            <a href="/capteurs" class="btn btn-outline-primary">
+                                                <i class="bi bi-speedometer2"></i> Dashboard complet
+                                            </a>
+                                            <a href="/support" class="btn btn-outline-secondary">
+                                                <i class="bi bi-headset"></i> Support technique
+                                            </a>
+                                        </Authorized>
+                                    </AuthorizeView>
+
+                                    <AuthorizeView Roles="Admin">
+                                        <Authorized>
+                                            <a href="/admin-dashboard" class="btn btn-outline-primary">
+                                                <i class="bi bi-speedometer2"></i> Dashboard Admin
+                                            </a>
+                                            <a href="/support-admin" class="btn btn-outline-secondary">
+                                                <i class="bi bi-ticket-detailed"></i> Gestion Tickets
+                                            </a>
+                                        </Authorized>
+                                    </AuthorizeView>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card shadow-sm h-100">
+                            <div class="card-body">
+                                <h5 class="card-title fw-bold mb-3">
+                                    <i class="bi bi-info-circle text-info"></i> Statut du système
+                                </h5>
+                                <ul class="list-unstyled">
+                                    <li class="mb-2">
+                                        <i class="bi bi-check-circle-fill text-success"></i> 
+                                        Capteurs : <strong>Opérationnels</strong>
+                                    </li>
+                                    <li class="mb-2">
+                                        <i class="bi bi-check-circle-fill text-success"></i> 
+                                        Connexion : <strong>Stable</strong>
+                                    </li>
+                                    <li class="mb-2">
+                                        <i class="bi bi-clock-fill text-warning"></i> 
+                                        Dernière synchro : <strong>Il y a 2 min</strong>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </div>
-        <div class="col-sm-3">
-            <div class="card bg-danger">
-                <div class="card-body">
-                    <h5 class="card-title">pluie</h5>
-                    <p class="card-text">With supporting text below as a natural lead-in to additional content.</p>
-                </div>
-            </div>
-        </div>
+            </Authorized>
+        </AuthorizeView>
     </div>
 </main>

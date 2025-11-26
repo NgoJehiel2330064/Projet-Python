@@ -1,11 +1,46 @@
-ï»¿@page "/"
+@page "/"
+@using Microsoft.AspNetCore.Components.Authorization
 @using StationMeteoBlazor.Components.Layout
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthStateProvider
+@rendermode InteractiveServer
 
-<PageTitle>Home</PageTitle>
-<main>
-    <AcceuilApresConnexion/>
-    
-</main>
+<PageTitle>Accueil - Station Météo</PageTitle>
 
+@if (isRedirecting)
+{
+    <p class="text-center mt-5">Redirection...</p>
+}
+else
+{
+    <AuthorizeView>
+        <Authorized>
+            <AcceuilApresConnexion />
+        </Authorized>
+        <NotAuthorized>
+            <AcceuilAvantConnexion />
+        </NotAuthorized>
+    </AuthorizeView>
+}
 
+@code {
+    private bool isRedirecting;
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        var state = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = state.User;
+
+        if (user?.Identity?.IsAuthenticated == true)
+        {
+            isRedirecting = true;
+            StateHasChanged();
+            if (user.IsInRole("Admin"))
+                Navigation.NavigateTo("/admin-dashboard", true);
+            else if (user.IsInRole("User"))
+                Navigation.NavigateTo("/capteurs", true);
+        }
+    }
+}
