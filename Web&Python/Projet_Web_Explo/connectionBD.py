@@ -1,5 +1,6 @@
 import pyodbc
 
+
 # Informations de connexion
 server = 'dicjwin01.cegepjonquiere.ca'   # ton vrai serveur SQL
 database = 'Prog3a25MaStation'
@@ -16,18 +17,25 @@ connection_string = (
     f"TrustServerCertificate=yes;"
 )
 
+
 try:
     conn = pyodbc.connect(connection_string)
     print(" Connexion réussie à la base de données.")
 
     cursor = conn.cursor()
-    cursor.execute("SELECT TOP 5 * FROM Utilisateur;")
+    cursor.execute("""INSERT INTO DonneeCapteur (IdUtilisateur, Temperature, Humidite, Pression, Lumiere, Pluie, VentDirection, VentVitesse)
+                    VALUES
+                    (10, 22.5, 45.0, 1013.25, 300.0, 0.0, 180.0, 5.2),
+                    (10, 22.7, 44.5, 1013.10, 320.0, 0.0, 185.0, 4.8),
+                    (10, 23.0, 43.8, 1012.95, 340.0, 0.0, 190.0, 4.5),
+                    (10, 23.3, 43.0, 1012.70, 360.0, 0.0, 200.0, 4.2)
+                    """)
 
-    for row in cursor.fetchall():
-        print(row)
+    conn.commit()
+    print("Insertion réussie.")
 
 except Exception as e:
-    print(" Erreur de connexion ou d'exécution :", e)
+    print("Erreur :", e)
 
 finally:
     if 'conn' in locals():
