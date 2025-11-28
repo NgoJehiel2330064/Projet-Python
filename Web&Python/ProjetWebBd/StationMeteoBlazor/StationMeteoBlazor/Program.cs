@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using StationMeteoBlazor.Components;
 using StationMeteoBlazor.Authentification;
 using Microsoft.AspNetCore.Components.Authorization;
+using Blazorise;
+using Blazorise.Icons.FontAwesome;
 
 namespace StationMeteoBlazor
 {
@@ -11,13 +13,16 @@ namespace StationMeteoBlazor
         {
             var builder = WebApplication.CreateBuilder(args);
 
+
             // Add services to the container.
             builder.Services.AddRazorComponents()
                 .AddInteractiveServerComponents();
             builder.Services.AddScoped<ProtectedSessionStorage>();
             //ajout de de d authentificationState
-            builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthenticationStateProvider >();
+            builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthenticationStateProvider>();
             builder.Services.AddAuthenticationCore();
+
+
 
             var app = builder.Build();
 
@@ -30,6 +35,7 @@ namespace StationMeteoBlazor
             }
 
             app.UseHttpsRedirection();
+
 
             app.UseStaticFiles();
             app.UseAntiforgery();
