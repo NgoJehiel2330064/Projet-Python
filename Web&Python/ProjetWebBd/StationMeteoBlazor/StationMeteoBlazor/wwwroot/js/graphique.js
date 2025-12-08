@@ -2,33 +2,26 @@
 // MODE SOMBRE / CLAIR - VERSION AMÉLIORÉE
 //---------------------------------------------------------------------
 window.toggleDarkMode = () => {
-    const body = document.body;
-    body.classList.toggle("dark-mode");
+    const html = document.documentElement;
+    const isDark = html.getAttribute("data-bs-theme") === "dark";
 
-    const mode = body.classList.contains("dark-mode") ? "dark" : "light";
-    localStorage.setItem("theme", mode);
+    html.setAttribute("data-bs-theme", isDark ? "light" : "dark");
 
-    // Mettre à jour l'icône du bouton
+    // Sauvegarde
+    localStorage.setItem("theme", isDark ? "light" : "dark");
+
+    // Mise à jour icône
     updateDarkModeIcon();
-    
-    // Redessiner les graphiques si présents
-    if (typeof Chart !== 'undefined') {
-        Chart.helpers.each(Chart.instances, function(instance) {
-            instance.destroy();
-        });
-    }
 };
 
 window.initTheme = () => {
-    const saved = localStorage.getItem("theme");
-    if (saved === "dark") {
-        document.body.classList.add("dark-mode");
-    }
+    const saved = localStorage.getItem("theme") || "light";
+    document.documentElement.setAttribute("data-bs-theme", saved);
     updateDarkModeIcon();
 };
 
 function updateDarkModeIcon() {
-    const isDark = document.body.classList.contains("dark-mode");
+    const isDark = document.documentElement.getAttribute("data-bs-theme") === "dark";
     const icons = document.querySelectorAll('.dark-mode-icon');
     icons.forEach(icon => {
         icon.className = isDark ? 'bi bi-sun-fill dark-mode-icon' : 'bi bi-moon-stars dark-mode-icon';

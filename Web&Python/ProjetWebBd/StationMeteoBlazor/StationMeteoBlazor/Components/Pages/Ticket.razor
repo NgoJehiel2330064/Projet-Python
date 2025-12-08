@@ -56,9 +56,9 @@ else
                             <i class="bi bi-info-circle text-primary"></i> Détails
                         </h5>
                     </div>
-                    <div class="card-body">
+                    <div class="card-body bg-black">
                         <dl class="row mb-0 ticket-details">
-                            <dt class="col-sm-4">Utilisateur</dt>
+                            <dt class="col-sm-4 ">Utilisateur</dt>
                             <dd class="col-sm-8">@ticket.Nom @ticket.Prenom</dd>
 
                             <dt class="col-sm-4">Date création</dt>
@@ -233,6 +233,12 @@ else
 }
 
 <style>
+    .ticket-details dt {
+        color: red;
+        border: 0;
+        font-size: .7rem;
+        letter-spacing: .5px;
+    }
     .ticket-wrapper { animation: fadeIn .4s ease; }
     .ticket-icon {
         width:52px;height:52px;border-radius:16px;

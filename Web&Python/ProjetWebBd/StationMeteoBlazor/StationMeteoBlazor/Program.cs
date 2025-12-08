@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using System.Security.Claims;
+using BootstrapBlazor;
 
 namespace StationMeteoBlazor
 {
@@ -32,6 +33,8 @@ namespace StationMeteoBlazor
 
             // HttpClient pour appels internes (ex: création du cookie via endpoint)
             builder.Services.AddHttpClient();
+
+            builder.Services.AddBootstrapBlazor();
 
             builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                 .AddCookie(options =>

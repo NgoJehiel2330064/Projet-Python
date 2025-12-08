@@ -1,0 +1,113 @@
+/* =========================================================
+   THEME BOOTSTRAP — Light & Dark Mode
+   S'adapte automatiquement grâce au data-bs-theme="light|dark"
+   ========================================================= */
+
+/* ----------- THEME LIGHT (Default) ----------- */
+:root,
+:root[data-bs-theme="light"] {
+    --app-bg: #f5f7fa;
+    --card-bg: #ffffff;
+    --input-bg: #ffffff;
+    --input-border: #ced4da;
+    --text-color: #212529;
+    --label-color: #6c757d;
+    --ticket-header-bg: #f8f9fc;
+}
+
+    /* ----------- THEME DARK ----------- */
+    :root[data-bs-theme="dark"] {
+        --app-bg: #111418;
+        --card-bg: #1b1f24;
+        --input-bg: #262b31;
+        --input-border: #3c434c;
+        --text-color: #e9ecef;
+        --label-color: #adb5bd;
+        --ticket-header-bg: #2a2f36;
+    }
+
+/* =========================================================
+   GLOBAL
+   ========================================================= */
+
+body {
+    background: var(--app-bg) !important;
+    color: var(--text-color) !important;
+    transition: background .30s ease, color .30s ease;
+}
+
+/* =========================================================
+   FORM & INPUTS
+   ========================================================= */
+
+.form-control {
+    background-color: var(--input-bg) !important;
+    border-color: var(--input-border) !important;
+    color: var(--text-color) !important;
+}
+
+    .form-control:focus {
+        background-color: var(--input-bg) !important;
+        border-color: #0d6efd !important;
+        color: var(--text-color) !important;
+        box-shadow: 0 0 0 .2rem rgba(13,110,253,.25);
+    }
+
+.form-label {
+    color: var(--label-color) !important;
+}
+
+/* =========================================================
+   CARDS
+   ========================================================= */
+
+.card {
+    background-color: var(--card-bg) !important;
+    border: 1px solid var(--input-border) !important;
+    color: var(--text-color) !important;
+    transition: background-color .3s ease, border-color .3s ease;
+}
+
+/* =========================================================
+   BUTTONS
+   ========================================================= */
+
+.btn-primary {
+    color: white !important;
+}
+
+.btn-secondary {
+    color: white !important;
+}
+
+/* =========================================================
+   NAVBAR
+   ========================================================= */
+
+.navbar,
+.navbar .dropdown-menu {
+    background-color: var(--card-bg) !important;
+    color: var(--text-color) !important;
+}
+
+.nav-link, .navbar-brand {
+    color: var(--text-color) !important;
+}
+
+    .nav-link:hover {
+        color: #0d6efd !important;
+    }
+
+/* =========================================================
+   DARK MODE ICONS
+   ========================================================= */
+
+.dark-mode-icon {
+    font-size: 22px;
+    cursor: pointer;
+    transition: .2s;
+}
+
+    .dark-mode-icon:hover {
+        transform: scale(1.1);
+    }
