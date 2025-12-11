@@ -17,6 +17,8 @@ import board
 import adafruit_pcf8591.pcf8591 as PCF
 from adafruit_pcf8591.analog_in import AnalogIn
 from adafruit_pcf8591.analog_out import AnalogOut
+from gpiozero import DigitalInputDevice
+import pymssql
 
 # Création de la communication I2C
 
@@ -32,6 +34,33 @@ pcf = PCF.PCF8591(i2c)
 pcf_in_0 = AnalogIn(pcf, PCF.A0)
 pcf_out = AnalogOut(pcf, PCF.OUT)
 
+rain_sensor = DigitalInputDevice(17)
+
+# ========== CONFIG SQL ==========
+server = 'dicjwin01.cegepjonquiere.ca'   # ton vrai serveur SQL
+database = 'Prog3a25MaStation'
+username = 'prog3e07'
+password = 'fenetre98'
+
+conn = pymssql.connect(
+    server= server,
+    user=username,
+    password=password,
+    database=database
+)
+
+cursor = conn.cursor()
+
+
+def enregistrer_donnees(id_user, temp, hum, press, lumiere, pluie):
+    cursor.execute("""
+        INSERT INTO DonneeCapteur
+        (IdUtilisateur, DateMesure, Temperature, Humidite, Pression, Lumiere, Pluie)
+        VALUES (%s, GETDATE(), %s, %s, %s, %s, %s)
+    """, (id_user, temp, hum, press, lumiere, pluie))
+
+    conn.commit()
+    print(">> Données insérées avec succès.")
 
 
 
@@ -64,17 +93,33 @@ try:
        # Lecture du PCF8591 (valeur analogique)
        analog_value = adc_channel.value
        # Affichage des valeurs
+       if rain_sensor.is_active:  # Check if the sensor is active (no rain)
+         print("No rain detected.")  # Print message for no rain detected
+         rain = 1
+       else:
+        print("Rain detected!")  # Print message for rain detected
+        rain = 0
+
        print(f"Température : {temp_c:.2f} °C / {temp_f:.2f} °F")
        print(f"Pression    : {pressure:.2f} hPa")
        print(f"Humidité    : {humidity:.2f} %")
        print(f"Valeur ADC  : {analog_value}")
        print("-" * 40)
        print(f"Valeur du photoresistor : {pcf_in_0.value}")
-       time.sleep(2)
+       temp = temp_c
+       press = pressure
+       hum = humidity
+       photo = pcf_in_0.value
+       
+
+       time.sleep(10)
+       enregistrer_donnees(10, temp,hum, press,photo,rain )
 except KeyboardInterrupt:
    print("Programme arrêté proprement.")
    GPIO.cleanup()
 except Exception as e:
    print("Erreur :", e)
    GPIO.cleanup()
+
+
  
