@@ -1,87 +1,198 @@
-﻿@page "/profile"
-@using Microsoft.AspNetCore.Components.Forms
+﻿@page "/profile/edit"
+@using StationMeteoBlazor.Models
+@using StationMeteoBlazor.Data
+@inject UserService UserService
+@inject ParmService parmService
+@inject AuthenticationStateProvider Auth
+@inject IJSRuntime JS
 
-<PageTitle>Profil Utilisateur</PageTitle>
+<h2 class="mb-4">Modifier votre profil</h2>
 
-<div class="container mt-4">
+@if (loading)
+{
+    <p>Chargement...</p>
+}
+else if (utilisateur == null)
+{
+    <div class="alert alert-danger">
+        Impossible de charger les informations du compte.
+    </div>
+}
+else
+{
+    <div class="card shadow-sm p-4">
 
-    <h2 class="mb-4">Profil Utilisateur</h2>
+        <h4 class="mb-3"><i class="bi bi-person-circle me-2"></i>Informations du compte</h4>
 
-    <!-- Le modèle statique requis pour éviter l'erreur EditForm -->
-    @code {
-        public class FakeUserModel
+        <table class="table table-bordered align-middle">
+            <tbody>
+                <!-- NOM -->
+                <tr>
+                    <th style="width: 25%;">Nom</th>
+                    <td>
+                        @if (editField == "nom")
+                        {
+                            <input class="form-control" @bind="editModel.Nom" />
+                        }
+                        else
+                        {
+                            @utilisateur.Nom
+                        }
+                    </td>
+                    <td style="width: 120px;">
+                        @if (editField == "nom")
+                        {
+                            <button class="btn btn-success btn-sm" @onclick="@(() => SaveField("nom"))">
+                                <i class="bi bi-check-circle"></i> Save
+                            </button>
+                        }
+                        else
+                        {
+                            <button class="btn btn-primary btn-sm" @onclick="@(() => Edit("nom"))">
+                                <i class="bi bi-pencil-square"></i> Edit
+                            </button>
+                        }
+                    </td>
+                </tr>
+
+                <!-- PRENOM -->
+                <tr>
+                    <th>Prénom</th>
+                    <td>
+                        @if (editField == "prenom")
+                        {
+                            <input class="form-control" @bind="editModel.Prenom" />
+                        }
+                        else
+                        {
+                            @utilisateur.Prenom
+                        }
+                    </td>
+                    <td>
+                        @if (editField == "prenom")
+                        {
+                            <button class="btn btn-success btn-sm" @onclick="@(() => SaveField("prenom"))">
+                                <i class="bi bi-check-circle"></i> Save
+                            </button>
+                        }
+                        else
+                        {
+                            <button class="btn btn-primary btn-sm" @onclick="@(() => Edit("prenom"))">
+                                <i class="bi bi-pencil-square"></i> Edit
+                            </button>
+                        }
+                    </td>
+                </tr>
+
+                <!-- EMAIL -->
+                <tr>
+                    <th>Adresse courriel</th>
+                    <td>
+                        @if (editField == "email")
+                        {
+                            <input class="form-control" @bind="editModel.Email" />
+                        }
+                        else
+                        {
+                            @utilisateur.Email
+                        }
+                    </td>
+                    <td>
+                        @if (editField == "email")
+                        {
+                            <button class="btn btn-success btn-sm" @onclick="@(() => SaveField("email"))">
+                                <i class="bi bi-check-circle"></i> Save
+                            </button>
+                        }
+                        else
+                        {
+                            <button class="btn btn-primary btn-sm" @onclick="@(() => Edit("email"))">
+                                <i class="bi bi-pencil-square"></i> Edit
+                            </button>
+                        }
+                    </td>
+                </tr>
+
+            </tbody>
+        </table>
+
+        <!-- MESSAGE -->
+        @if (!string.IsNullOrEmpty(message))
         {
-            public string Nom { get; set; } = "";
-            public string Prenom { get; set; } = "";
-            public string Email { get; set; } = "";
-            public int Age { get; set; }
+            <div class="alert mt-3 @(isSuccess ? "alert-success" : "alert-danger")">
+                @message
+            </div>
         }
+    </div>
+}
 
-        private FakeUserModel formModel = new();
+@code {
+    private Utilisateur? utilisateur;
+    private Utilisateur? editModel = new();
+    private bool loading = true;
+    private string? editField;
+    private string? message;
+    private bool isSuccess;
+    int userId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        loading = true;
+
+        var auth = await Auth.GetAuthenticationStateAsync();
+        var user = auth.User;
+
+        // ⚠️ Récupérer l'ID utilisateur depuis les claims
+        userId = int.Parse(user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0");
+
+        utilisateur = await UserService.GetUserById(userId);
+
+        loading = false;
     }
 
-    <!-- FORMULAIRE DU PROFIL UTILISATEUR -->
-    <!-- COMMENTAIRE : Ici, on injectera plus tard les vraies valeurs de l'utilisateur connecté -->
-    <EditForm Model="formModel">
+    private void Edit(string field)
+    {
+        editField = field;
 
-        <div class="card p-4 shadow-sm">
+        // Copy current values
+        editModel = new Utilisateur
+        {
+            IdUtilisateur = utilisateur.IdUtilisateur,
+            Nom = utilisateur.Nom,
+            Prenom = utilisateur.Prenom,
+            Email = utilisateur.Email
+        };
+    }
 
-            <!-- Champ Nom -->
-            <!-- COMMENTAIRE : afficher le nom de l'utilisateur -->
-            <div class="mb-3">
-                <label class="form-label fw-bold">Nom</label>
-                <input class="form-control" @bind="formModel.Nom" placeholder="Nom" />
-            </div>
+    private async Task SaveField(string field)
+    {
+        message = null;
 
-            <!-- Champ Prénom -->
-            <!-- COMMENTAIRE : afficher le prénom de l'utilisateur -->
-            <div class="mb-3">
-                <label class="form-label fw-bold">Prénom</label>
-                <input class="form-control" @bind="formModel.Prenom" placeholder="Prénom" />
-            </div>
+        bool ok = await UserService.UpdateUserField(editModel.IdUtilisateur, field, field switch
+        {
+            "nom" => editModel.Nom,
+            "prenom" => editModel.Prenom,
+            "email" => editModel.Email,
+            _ => ""
+        });
 
-            <!-- Champ Email -->
-            <!-- COMMENTAIRE : afficher l'email de l'utilisateur -->
-            <div class="mb-3">
-                <label class="form-label fw-bold">Email</label>
-                <input type="email" class="form-control" @bind="formModel.Email" placeholder="Email" />
-            </div>
+        if (!ok)
+        {
+            message = "Une erreur est survenue lors de la mise à jour.";
+            isSuccess = false;
+            return;
+        }
 
-            <!-- Champ Âge -->
-            <!-- COMMENTAIRE : afficher l’âge de l’utilisateur -->
-            <div class="mb-3">
-                <label class="form-label fw-bold">Âge</label>
-                <input type="number" class="form-control" @bind="formModel.Age" placeholder="Âge" />
-            </div>
+        // Update displayed values
+        switch (field)
+        {
+            case "nom": utilisateur.Nom = editModel.Nom; break;
+            case "prenom": utilisateur.Prenom = editModel.Prenom; break;
+            case "email": utilisateur.Email = editModel.Email; break;
+        }
 
-            <button class="btn btn-primary mt-3" type="submit">Enregistrer</button>
-
-        </div>
-    </EditForm>
-
-    <!-- AVATAR + MENU UTILISATEUR -->
-    <div class="mt-5">
-        <div class="dropdown">
-
-            <!-- COMMENTAIRE : ici viendra le nom de l’utilisateur connecté -->
-            <button class="btn btn-sm btn-outline-primary dropdown-toggle d-flex align-items-center gap-2"
-                    type="button" id="userDropdown" data-bs-toggle="dropdown">
-
-                <!-- COMMENTAIRE : avatar dynamique plus tard -->
-                <img src="https://ui-avatars.com/api/?name=U&background=1b6ec2&color=fff"
-                     class="rounded-circle" height="28" alt="Avatar" />
-
-                <!-- COMMENTAIRE : nom complet de l'utilisateur -->
-                <span class="d-none d-md-inline">Utilisateur</span>
-            </button>
-
-            <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="/profile">Mon profil</a></li>
-                <li><hr class="dropdown-divider" /></li>
-                <li><button class="dropdown-item text-danger">Déconnexion</button></li>
-            </ul>
-
-        </div>
-    </div>
-
-</div>
+        editField = null;
+        message = "Changement enregistré avec succès !";
+        isSuccess = true;
+    }
+}

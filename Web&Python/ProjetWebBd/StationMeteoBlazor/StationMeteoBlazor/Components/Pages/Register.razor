@@ -1,5 +1,9 @@
 ﻿@page "/register"
+@using StationMeteoBlazor.Data
 @using StationMeteoBlazor.Models
+@using StationMeteoBlazor.Partials
+@rendermode InteractiveServer
+@inject RegisterService Service
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
 
@@ -8,9 +12,9 @@
 <div class="login-hero position-relative">
     <div class="hero-overlay"></div>
     <div class="container py-5 position-relative">
-        <div class="row justify-content-center">
-            <div class="col-xl-5 col-lg-6">
-                <div class="glass-card shadow-lg">
+        <div class="row justify-content-center m-3">
+            <div class="col-xl-5 col-lg-6 ">
+                <div class="glass-card shadow-lg p-3 ">
 
                     <!-- Header -->
                     <div class="text-center mb-4">
@@ -21,14 +25,26 @@
                         <p class="text-muted small">Rejoignez votre station météo intelligente.</p>
                     </div>
 
-                    <!-- NOM -->
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Nom</label>
-                        <div class="input-group fancy-input">
-                            <span class="input-group-text bg-white">
-                                <i class="bi bi-person"></i>
-                            </span>
-                            <input type="text" class="form-control" placeholder="Votre nom" @bind="model.Nom">
+                    <div class="d-flex justify-content-between">
+                        <!-- NOM -->
+                        <div class="mb-3 w-50 me-2">
+                            <label class="form-label fw-semibold">Nom</label>
+                            <div class="input-group fancy-input">
+                                <span class="input-group-text bg-white">
+                                    <i class="bi bi-person"></i>
+                                </span>
+                                <input type="text" class="form-control" placeholder="Votre nom" @bind="model.Nom">
+                            </div>
+                        </div>
+                        <!-- PRENOM -->
+                        <div class="mb-3 w-50">
+                            <label class="form-label fw-semibold">Prénom</label>
+                            <div class="input-group fancy-input">
+                                <span class="input-group-text bg-white">
+                                    <i class="bi bi-person"></i>
+                                </span>
+                                <input type="text" class="form-control" placeholder="Votre prénom" @bind="model.Prenom">
+                            </div>
                         </div>
                     </div>
 
@@ -120,26 +136,61 @@
 
     private async Task RegisterAsync()
     {
-        if (model.Password != model.PasswordConfirm)
+        // --- VALIDATIONS CLIENT-SIDE ---
+        if (string.IsNullOrWhiteSpace(model.Nom) ||
+            string.IsNullOrWhiteSpace(model.Prenom) ||
+            string.IsNullOrWhiteSpace(model.Email) ||
+            string.IsNullOrWhiteSpace(model.Password) ||
+            string.IsNullOrWhiteSpace(model.PasswordConfirm))
         {
-            message = "Les mots de passe ne correspondent pas.";
-            messageOk = false;
+            ShowError("Veuillez remplir tous les champs.");
             return;
         }
 
-        messageOk = true;
-        message = "Compte créé avec succès !";
-        await Task.Delay(700);
+        if (!model.Email.Contains("@") || !model.Email.Contains("."))
+        {
+            ShowError("Veuillez entrer une adresse courriel valide.");
+            return;
+        }
 
+        if (model.Password != model.PasswordConfirm)
+        {
+            ShowError("Les mots de passe ne correspondent pas.");
+            return;
+        }
+
+        if (model.Password.Length < 6)
+        {
+            ShowError("Le mot de passe doit contenir au moins 6 caractères.");
+            return;
+        }
+
+        // --- APPEL SERVEUR ---
+        int id = await Service.CreerUtilisateur(
+            model.Nom,
+            model.Prenom,
+            model.Email,
+            model.Password,
+            false
+        );
+
+        if (id <= 0)
+        {
+            ShowError("Cet email est déjà utilisé.");
+            return;
+        }
+
+        // SUCCÈS
+        messageOk = true;
+        message = "Compte créé avec succès ! Redirection...";
+        await Task.Delay(5000);
         Navigation.NavigateTo("/login");
     }
 
-    public class RegisterUser
+    private void ShowError(string msg)
     {
-        public string Nom { get; set; }
-        public string Email { get; set; }
-        public string Password { get; set; }
-        public string PasswordConfirm { get; set; }
+        messageOk = false;
+        message = msg;
     }
-}
 
+}

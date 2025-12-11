@@ -8,13 +8,33 @@
 
 <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
     <div class="container-fluid">
-        <a class="navbar-brand fw-bold text-primary" href="/">
-            <i class="bi bi-cloud-sun"></i> Station Météo
-        </a>
 
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
-            <span class="navbar-toggler-icon"></span>
-        </button>
+         <AuthorizeView>
+            <Authorized Context="auth">
+                <AuthorizeView Roles="User">
+                    <a class="navbar-brand fw-bold text-primary" href="/capteurs">
+                        <i class="bi bi-cloud-sun"></i> Station Météo
+                    </a>
+                </AuthorizeView>
+                <AuthorizeView Roles="Admin">
+                    <a class="navbar-brand fw-bold text-primary" href="/support-admin">
+                        <i class="bi bi-cloud-sun"></i> Station Météo
+                    </a>
+
+                </AuthorizeView>
+            </Authorized>
+            <NotAuthorized>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+            </NotAuthorized>
+
+         </AuthorizeView>
+                
+
+
+
 
         <div class="collapse navbar-collapse" id="navbarContent">
             <AuthorizeView>
@@ -27,9 +47,6 @@
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-link" href="/support"><i class="bi bi-headset"></i> Support</a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item" href="/profile/edit">Mon profil</a>
                                 </li>
 
                             </Authorized>
@@ -71,7 +88,7 @@
                                 </li>
                                 <li><hr class="dropdown-divider" /></li>
                                 <li><a class="dropdown-item" href="/profile/edit"><i class="bi bi-person-circle"></i> Profil</a></li>
-                                <li><a class="dropdown-item" href="#"><i class="bi bi-gear"></i> Paramètres</a></li>
+                                <li><a class="dropdown-item" href="/parametres"><i class="bi bi-gear"></i> Paramètres</a></li>
                                 <li><hr class="dropdown-divider" /></li>
                                 <li>
                                     <LogoutButton CssClass="dropdown-item text-danger" RedirectUrl="/login" Confirm="true" />

@@ -23,6 +23,11 @@ namespace StationMeteoBlazor
             builder.Services.AddDbContextFactory<Prog3a25MaStationContext>(x => x.UseSqlServer(conStrBuilder.ConnectionString));
 
             builder.Services.AddScoped<DonneeCapteurService>();
+            builder.Services.AddScoped<ParmService>();
+            builder.Services.AddScoped<RegisterService>();
+            builder.Services.AddScoped<UserService>();
+            builder.Services.AddScoped<AdminService>();
+
             builder.Services.AddScoped<LoginService>();
             builder.Services.AddScoped<SupportService>();
             builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthenticationStateProvider>();

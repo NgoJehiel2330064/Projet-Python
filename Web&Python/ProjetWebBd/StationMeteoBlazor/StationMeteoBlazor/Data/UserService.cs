@@ -14,49 +14,36 @@ namespace StationMeteoBlazor.Data
             _factory = factory;
         }
 
-        // -------------------------------------------------------
-        // 🔐  Hash & Vérification du mot de passe
-        // -------------------------------------------------------
-        public static string HashPassword(string password, Guid salt)
+        public async Task<Utilisateur?> GetUserById(int id)
         {
-            using var sha = SHA256.Create();
-            var combined = password + salt.ToString();
-
-            var bytes = Encoding.UTF8.GetBytes(combined);
-            var hash = sha.ComputeHash(bytes);
-
-            return Convert.ToBase64String(hash);
+            using var db = _factory.CreateDbContext();
+            return await db.Utilisateurs
+                .Where(u => u.IdUtilisateur == id)
+                .Select(u => new Utilisateur
+                {
+                    IdUtilisateur = u.IdUtilisateur,
+                    Nom = u.Nom,
+                    Prenom = u.Prenom,
+                    Email = u.Email
+                })
+                .FirstOrDefaultAsync();
         }
 
-        public static bool VerifyPassword(string password, Guid salt, string storedHash)
+        public async Task<bool> UpdateUserField(int id, string field, string value)
         {
-            var hash = HashPassword(password, salt);
-            return hash == storedHash;
-        }
+            using var db = _factory.CreateDbContext();
 
-        // -------------------------------------------------------
-        // 🔍  Récupération d'un utilisateur par ID
-        // -------------------------------------------------------
-        public async Task<Utilisateur?> GetUserById(int idUtilisateur)
-        {
-            using var context = _factory.CreateDbContext();
-            return await context.Utilisateurs.FirstOrDefaultAsync(u => u.IdUtilisateur == idUtilisateur);
-        }
-
-        // -------------------------------------------------------
-        // ✏️  Modifier profil (Nom, Prénom, Email, Tel, etc.)
-        // -------------------------------------------------------
-        public async Task<bool> UpdateUserProfile(Utilisateur updated)
-        {
-            using var context = _factory.CreateDbContext();
-
-            var user = await context.Utilisateurs.FindAsync(updated.IdUtilisateur);
+            var user = await db.Utilisateurs.FirstOrDefaultAsync(x => x.IdUtilisateur == id);
             if (user == null) return false;
 
-            user.Nom = updated.Nom;
-            user.Prenom = updated.Prenom;
-            user.Email = updated.Email;
-            await context.SaveChangesAsync();
+            switch (field)
+            {
+                case "nom": user.Nom = value; break;
+                case "prenom": user.Prenom = value; break;
+                case "email": user.Email = value; break;
+            }
+
+            await db.SaveChangesAsync();
             return true;
         }
 

@@ -1,0 +1,125 @@
+﻿@page "/admin/add"
+@using StationMeteoBlazor.Data
+@using StationMeteoBlazor.Models
+@inject AdminService Service
+@inject IJSRuntime JS
+
+<PageTitle>Gestion des admins</PageTitle>
+
+<div class="container py-4">
+    <h2 class="mb-4"><i class="bi bi-shield-lock-fill me-2"></i>Gestion des administrateurs</h2>
+
+    <!-- Recherche -->
+    <div class="input-group mb-4 shadow-sm">
+        <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+        <input class="form-control" placeholder="Rechercher un utilisateur par nom, prénom ou email..."
+               @bind="searchTerm" @bind:event="oninput" />
+        <button class="btn btn-outline-secondary" @onclick="Search"><i class="bi bi-arrow-clockwise"></i></button>
+    </div>
+
+    <!-- Résultats -->
+    @if (loading)
+    {
+        <p>Chargement...</p>
+    }
+    else if (results.Count == 0)
+    {
+        <div class="alert alert-info">Aucun utilisateur trouvé.</div>
+    }
+    else
+    {
+        <table class="table table-hover shadow-sm">
+            <thead class="table-light">
+                <tr>
+                    <th>Nom</th>
+                    <th>Prénom</th>
+                    <th>Email</th>
+                    <th>Rôle actuel</th>
+                    <th style="width:160px;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var u in results)
+                {
+                    <tr>
+                        <td>@u.Nom</td>
+                        <td>@u.Prenom</td>
+                        <td>@u.Email</td>
+                        <td>
+                            @if (u.Admin)
+                            {
+                                <span class="badge bg-success">Admin</span>
+                            }
+                            else
+                            {
+
+                                <span class="badge bg-secondary">Utilisateur</span>
+                            }
+                        </td>
+                        <td>
+                            @if (!u.Admin)
+                            {
+                                <button class="btn btn-primary btn-sm"
+                                        @onclick="() => MakeAdmin(u.IdUtilisateur)">
+                                    <i class="bi bi-person-check"></i> Promouvoir
+                                </button>
+                            }
+                            else
+                            {
+                                <button disabled class="btn btn-outline-success btn-sm">
+                                    Déjà admin
+                                </button>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+
+    <!-- Message -->
+    @if (!string.IsNullOrEmpty(message))
+    {
+        <div class="alert mt-3 @(success ? "alert-success" : "alert-danger")">
+            @message
+        </div>
+    }
+</div>
+
+@code {
+    private string searchTerm = "";
+    private List<Utilisateur> results = new();
+    private bool loading = false;
+    private string message = "";
+    private bool success;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Search();
+    }
+
+    private async Task Search()
+    {
+        loading = true;
+        results = await Service.SearchUsers(searchTerm);
+        loading = false;
+    }
+
+    private async Task MakeAdmin(int idUser)
+    {
+        var ok = await Service.PromoteToAdmin(idUser);
+
+        if (ok)
+        {
+            message = "L'utilisateur a été promu administrateur.";
+            success = true;
+        }
+        else
+        {
+            message = "Impossible de promouvoir cet utilisateur.";
+            success = false;
+        }
+
+        await Search(); // reload
+    }
+}
