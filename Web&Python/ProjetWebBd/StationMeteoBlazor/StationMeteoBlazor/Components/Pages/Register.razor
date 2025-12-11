@@ -1,0 +1,196 @@
+﻿@page "/register"
+@using StationMeteoBlazor.Data
+@using StationMeteoBlazor.Models
+@using StationMeteoBlazor.Partials
+@rendermode InteractiveServer
+@inject RegisterService Service
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+<PageTitle>Inscription</PageTitle>
+
+<div class="login-hero position-relative">
+    <div class="hero-overlay"></div>
+    <div class="container py-5 position-relative">
+        <div class="row justify-content-center m-3">
+            <div class="col-xl-5 col-lg-6 ">
+                <div class="glass-card shadow-lg p-3 ">
+
+                    <!-- Header -->
+                    <div class="text-center mb-4">
+                        <div class="login-icon mb-3">
+                            <i class="bi bi-person-plus-fill"></i>
+                        </div>
+                        <h2 class="fw-bold mb-1">Créer un compte</h2>
+                        <p class="text-muted small">Rejoignez votre station météo intelligente.</p>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <!-- NOM -->
+                        <div class="mb-3 w-50 me-2">
+                            <label class="form-label fw-semibold">Nom</label>
+                            <div class="input-group fancy-input">
+                                <span class="input-group-text bg-white">
+                                    <i class="bi bi-person"></i>
+                                </span>
+                                <input type="text" class="form-control" placeholder="Votre nom" @bind="model.Nom">
+                            </div>
+                        </div>
+                        <!-- PRENOM -->
+                        <div class="mb-3 w-50">
+                            <label class="form-label fw-semibold">Prénom</label>
+                            <div class="input-group fancy-input">
+                                <span class="input-group-text bg-white">
+                                    <i class="bi bi-person"></i>
+                                </span>
+                                <input type="text" class="form-control" placeholder="Votre prénom" @bind="model.Prenom">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- COURRIEL -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Adresse courriel</label>
+                        <div class="input-group fancy-input">
+                            <span class="input-group-text bg-white">
+                                <i class="bi bi-envelope"></i>
+                            </span>
+                            <input type="email" class="form-control" placeholder="exemple@cegepjonquiere.ca" @bind="model.Email">
+                        </div>
+                    </div>
+
+                    <!-- MOT DE PASSE -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold d-flex justify-content-between align-items-center">
+                            <span>Mot de passe</span>
+                            <button class="btn btn-link p-0 small" type="button" @onclick="ToggleMask">
+                                <i class="bi @(showPassword ? "bi-eye-slash" : "bi-eye")"></i> Afficher
+                            </button>
+                        </label>
+                        <div class="input-group fancy-input">
+                            <span class="input-group-text bg-white">
+                                <i class="bi bi-lock"></i>
+                            </span>
+                            <input type="@(_inputType)" class="form-control" placeholder="Mot de passe" @bind="model.Password">
+                        </div>
+                    </div>
+
+                    <!-- CONFIRM -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Confirmer le mot de passe</label>
+                        <div class="input-group fancy-input">
+                            <span class="input-group-text bg-white">
+                                <i class="bi bi-lock-fill"></i>
+                            </span>
+                            <input type="@(_inputType)" class="form-control" placeholder="Confirmez le mot de passe" @bind="model.PasswordConfirm">
+                        </div>
+                    </div>
+
+                    <!-- SUBMIT -->
+                    <div class="d-grid gap-2 mt-4">
+                        <button class="btn btn-primary btn-lg gradient-btn shadow-sm" @onclick="RegisterAsync">
+                            <i class="bi bi-person-check-fill me-1"></i> S’inscrire
+                        </button>
+                    </div>
+
+                    <!-- Déjà un compte -->
+                    <div class="text-center mt-3">
+                        <small class="text-muted">
+                            Déjà un compte ?
+                            <a href="/login" class="text-decoration-none fw-semibold">Connexion</a>
+                        </small>
+                    </div>
+
+                    <!-- Message -->
+                    @if (!string.IsNullOrEmpty(message))
+                    {
+                        <div class="alert mt-4 py-2 px-3 fade-in @(messageOk ? "alert-success" : "alert-danger")">
+                            <i class="bi @(messageOk ? "bi-check-circle-fill" : "bi-exclamation-triangle-fill") me-1"></i>
+                            @message
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-wave">
+        <svg viewBox="0 0 1200 120" preserveAspectRatio="none">
+            <path d="M985.66,92.83C906.67,72,823.78,31,743.84,14.19c-82.26-17.34-168.06-16.33-250.45.39-57.86,11.73-114,31.07-172,41.86A600.21,600.21,0,0,1,0,27.35V120H1200V95.83C1132.19,118.92,1055.71,111.31,985.66,92.83Z"
+                  fill="#fff"></path>
+        </svg>
+    </div>
+</div>
+
+@code {
+    private RegisterUser model = new();
+    private string message = string.Empty;
+    private bool messageOk;
+    private bool showPassword;
+    private string _inputType => showPassword ? "text" : "password";
+
+    private void ToggleMask()
+    {
+        showPassword = !showPassword;
+    }
+
+    private async Task RegisterAsync()
+    {
+        // --- VALIDATIONS CLIENT-SIDE ---
+        if (string.IsNullOrWhiteSpace(model.Nom) ||
+            string.IsNullOrWhiteSpace(model.Prenom) ||
+            string.IsNullOrWhiteSpace(model.Email) ||
+            string.IsNullOrWhiteSpace(model.Password) ||
+            string.IsNullOrWhiteSpace(model.PasswordConfirm))
+        {
+            ShowError("Veuillez remplir tous les champs.");
+            return;
+        }
+
+        if (!model.Email.Contains("@") || !model.Email.Contains("."))
+        {
+            ShowError("Veuillez entrer une adresse courriel valide.");
+            return;
+        }
+
+        if (model.Password != model.PasswordConfirm)
+        {
+            ShowError("Les mots de passe ne correspondent pas.");
+            return;
+        }
+
+        if (model.Password.Length < 6)
+        {
+            ShowError("Le mot de passe doit contenir au moins 6 caractères.");
+            return;
+        }
+
+        // --- APPEL SERVEUR ---
+        int id = await Service.CreerUtilisateur(
+            model.Nom,
+            model.Prenom,
+            model.Email,
+            model.Password,
+            false
+        );
+
+        if (id <= 0)
+        {
+            ShowError("Cet email est déjà utilisé.");
+            return;
+        }
+
+        // SUCCÈS
+        messageOk = true;
+        message = "Compte créé avec succès ! Redirection...";
+        await Task.Delay(5000);
+        Navigation.NavigateTo("/login");
+    }
+
+    private void ShowError(string msg)
+    {
+        messageOk = false;
+        message = msg;
+    }
+
+}

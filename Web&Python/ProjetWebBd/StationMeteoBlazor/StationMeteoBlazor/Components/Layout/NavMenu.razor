@@ -8,18 +8,38 @@
 
 <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
     <div class="container-fluid">
-        <a class="navbar-brand fw-bold text-primary" href="/">
-            <i class="bi bi-cloud-sun"></i> Station Météo
-        </a>
 
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
-            <span class="navbar-toggler-icon"></span>
-        </button>
+         <AuthorizeView>
+            <Authorized Context="auth">
+                <AuthorizeView Roles="User">
+                    <a class="navbar-brand fw-bold text-primary" href="/capteurs">
+                        <i class="bi bi-cloud-sun"></i> Station Météo
+                    </a>
+                </AuthorizeView>
+                <AuthorizeView Roles="Admin">
+                    <a class="navbar-brand fw-bold text-primary" href="/support-admin">
+                        <i class="bi bi-cloud-sun"></i> Station Météo
+                    </a>
+
+                </AuthorizeView>
+            </Authorized>
+            <NotAuthorized>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+            </NotAuthorized>
+
+         </AuthorizeView>
+                
+
+
+
 
         <div class="collapse navbar-collapse" id="navbarContent">
             <AuthorizeView>
                 <Authorized Context="auth">
-                    <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
+                    <ul class="nav justify-content-center align-items-baseline mx-auto mb-2 mb-lg-0">
                         <AuthorizeView Roles="User">
                             <Authorized>
                                 <li class="nav-item">
@@ -28,6 +48,7 @@
                                 <li class="nav-item">
                                     <a class="nav-link" href="/support"><i class="bi bi-headset"></i> Support</a>
                                 </li>
+
                             </Authorized>
                         </AuthorizeView>
 
@@ -44,11 +65,14 @@
                     </ul>
 
                     <div class="d-flex align-items-center gap-2">
+
+
                         <button class="btn btn-sm btn-outline-secondary" @onclick="ToggleDarkMode" title="Mode sombre">
                             <i class="bi dark-mode-icon @(isDark ? "bi-sun-fill" : "bi-moon-stars")"></i>
                         </button>
 
                         <LogoutButton CssClass="btn btn-sm btn-outline-danger align-items-center gap-1" RedirectUrl="/login" Confirm="true" />
+                   
 
                         <div class="dropdown">
                             <button class="btn btn-sm btn-outline-primary dropdown-toggle d-flex align-items-center gap-2"
@@ -63,8 +87,8 @@
                                     <strong>@auth.User.Identity?.Name</strong>
                                 </li>
                                 <li><hr class="dropdown-divider" /></li>
-                                <li><a class="dropdown-item" href="#"><i class="bi bi-person-circle"></i> Profil</a></li>
-                                <li><a class="dropdown-item" href="#"><i class="bi bi-gear"></i> Paramètres</a></li>
+                                <li><a class="dropdown-item" href="/profile/edit"><i class="bi bi-person-circle"></i> Profil</a></li>
+                                <li><a class="dropdown-item" href="/parametres"><i class="bi bi-gear"></i> Paramètres</a></li>
                                 <li><hr class="dropdown-divider" /></li>
                                 <li>
                                     <LogoutButton CssClass="dropdown-item text-danger" RedirectUrl="/login" Confirm="true" />
@@ -75,7 +99,7 @@
                 </Authorized>
 
                 <NotAuthorized>
-                    <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                    <ul class="nav justify-content-center align-items-baseline ms-auto mb-2 mb-lg-0">
                         <li class="nav-item">
                             <a class="nav-link" href="/login"><i class="bi bi-box-arrow-in-right"></i> Connexion</a>
                         </li>
